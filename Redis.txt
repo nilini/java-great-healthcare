@@ -161,5 +161,40 @@
 15、redis怎么实现分布式锁？
 15、Redis分布式锁有什么缺陷？
 16、Reids 的主从复制机制原理
+    1）复制过程
+        从节点执行slaveof命令；
+        连接建立、权限验证；
+        主节点将所有数据全部发给从节点（RDB文件且异步）；
+        主节点会持续的把写命令发送给从节点。
+    2）主从节点各自偏移量
+        主从节点会维护自身的复制偏移量；
+        主从节点各自的偏移量信息保存，info replication可以查看；
+        从节点会每秒上报自身的复制偏移量给主节点，因此主节点也会保存从节点的复制偏移量。
+
+17、Redis的线程模型是什么？
+
+18、当前redis集群有哪些玩法，各自优缺点，场景？
+
+19、Redis的并发竞争问题如何解决，了解Redis事务的CAS操作吗？
+    两个连接同时对price进行写操作，同时加10，结果应该是30。但如果读数据和写数据分两步则会出现错误。
+    解决方案：
+        1）代码中加锁
+        2）使用redis的乐观锁watch
+            watch price
+            get price $price
+            $price = $price + 10
+            multi
+            set price $price
+            exec
+           watch用于监控price，如果执行exec的时候，key对应的值变化了，则事务不会执行。
+           watch没有ABA问题。
+        3）使用redis自带的incr命令
+            incr、decr、incrby、decrby 它们是原子性递增或递减操作。
+        4）使用setnx命令
+            setnx只在key不存在的情况下，将键key的值设置为value。
+            成功返回1，失败返回0。
+            所以可以使用setnx实现锁。
+
+
 
 
