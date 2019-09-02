@@ -1,0 +1,23 @@
+1、常见linux命令？
+    cd
+    cat：
+        cat -n file1 显示行号
+        cat fiile | head -n 6 显示前6行
+        cat file | tail -n 7 显示后7行
+    pwd：
+        显示当前路径
+    touch:
+        touch file 创建文件
+    mkdir：
+        mkdir cate 创建目录
+    ls：
+        ls -sail 显示更多信息
+    cp：
+        cp file1 file2 复制
+    rm：
+        rm -rf file1 强制删除
+    mv：
+        mv 
+    diff:
+        diff -c file1 file2 同时显示
+        diff -y file1 file2 并列显示
