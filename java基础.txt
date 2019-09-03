@@ -17,6 +17,12 @@
              
 2、String类能被继承吗，为什么。
     不能，String类是被final修饰的。final修饰的类不能被继承。
+    final类不能被继承。
+    final方法不能被重写。
+    final成员变量必须声明的时候赋值或在构造函数中赋值。
+    final变量不能被再次赋值。引用的内容可以变化。
+    String和Integer都是final修饰的。为了安全和效率，用的多，非常底层的一个类。
+    被final修饰的函数会被直接插入到函数调用处，减少了函数调用的次数（类内部有个函数签名和函数地址的映射表）。但替换太多会导致内嵌之后的代码长度大大增加。增加了jvm解释字节码的时间。
 
 3、String，Stringbuffer，StringBuilder的区别。
     String是不可变类，线程安全，对String进行操作时总是创建新的字符串。
@@ -45,7 +51,7 @@
 
 7、JAVA8的ConcurrentHashMap为什么放弃了分段锁，有什么问题吗，如果你来设计，你如何设计。
     java 5之后，JDK引入了java.util.concurrent并发包，其中最常用的就是ConcurrentHashMap了，它的原理是引用了内部的Segment分段锁，
-    保证在操作不同段map的时候，可以并发执行，操作通断map的时候，进行锁的竞争和等待，从而达到线程安全。
+    保证在操作不同段map的时候，可以并发执行，操作同段map的时候，进行锁的竞争和等待，从而达到线程安全。
     但是java 8之后，JDK放弃了Segment，使用了synchronized。
     
     put的时候，首先通过hash找到对应链表过后，查看是否是第一个Object，如果是，直接用cas原则插入，无需加锁。
@@ -59,13 +65,6 @@
 9、抽象类和接口的区别，类可以继承多个类么，接口可以继承多个接口么,类可以实现多个接口么。
     java类不支持多继承，但是可以实现多个接口。
     接口可以继承多个接口。
-
-10、继承和聚合的区别在哪。
-    继承：类与类之间；接口与接口之间。
-    实现：类实现接口（可以多个）。
-
-11、IO模型有哪些，讲讲你理解的nio ，他和bio，aio的区别是啥，谈谈reactor模型。
-    208道.txt
 
 12、反射的原理，反射创建类实例的三种方式是什么。
     可以在运行时判断一个对象所属的类，构造一个类的对象，判断类具有的成员变量和方法，调用1个对象的方法。
@@ -81,11 +80,26 @@
     spring中IOC通过xml配置实例化对象，用到了反射。
     spring中的注解：首先解析所有属性，判断属性上是否存在指定注解，如果存在则根据搜索规则取得bean，然后利用反射原理注入。如果标注在字段上面，也可以通过字段的反射技术取得注解，根据搜索规则取得bean，然后利用反射技术注入。
 
+    反射是如何实现的
+        JVM实现
+    如何通过反射调用对象的方法
+        Class clazz = new student().getClass(); // 先获得class对象
+        Method method = clazz.getMethod("test",String.class,int.class); // 再获取method对象
+        Object obj1 = method.invoke(clazz.newInstance(),"xiaojun",23);  // 然后执行invoke
+    如何通过反射获取和设置对象私有字段的值
+        Field fields[] = obj.getClass().getDeclaredFields();getDeclaredFields()：//得到对象的所有私有属性
+        for (Field field : fields) {
+            field.setAccessible(true);
+            field.set(obj, "ddd");//通过反射给指定字段赋值
+         }
+    反射机制的优缺点
+
 13、反射中，Class.forName和ClassLoader区别 。
     ClassLoader.loadClass()也加载到JVM，但是不会执行static块，并且只有调用了new Instance方法才会调用构造函数。
 
 14、描述动态代理的几种实现方式，分别说出相应的优缺点。
     基于JDK的实现和基于Cglib的实现
+    
 15、动态代理与cglib实现的区别。
     基于JDK的动态代理，需要实现一个或多个接口（InvocationHandler）；
     Cglib的方式可以代理任意一个目标类，但对final类和方法无法处理。
@@ -95,14 +109,6 @@
     JDK动态代理机制是委托机制，动态实现接口类，在动态生成的实现类里面委托为handler去调用原始实现类。
     Cglib则使用继承机制，被代理类和代理类是继承关系。
 16、为什么CGlib方式可以对接口实现代理。
-
-17、final的用途。
-    final类不能被继承。
-    final方法不能被重写。
-    final成员变量必须声明的时候赋值或在构造函数中赋值。
-    final变量不能被再次赋值。引用的内容可以变化。
-    String和Integer都是final修饰的。为了安全和效率，用的多，非常底层的一个类。
-    被final修饰的函数会被直接插入到函数调用处，减少了函数调用的次数（类内部有个函数签名和函数地址的映射表）。但替换太多会导致内嵌之后的代码长度大大增加。增加了jvm解释字节码的时间。
 
 18、写出三种单例模式实现。
     简单工厂、工厂方法、抽象工厂
@@ -503,7 +509,6 @@
     回答后面试官又问我
     3 知道jdk 1.5之后添加的一种实现单例模式的讨巧方法吗？
     4 enum 如何实现单例模式？
-117、抽象类和接口的区别。 他们的应用场景
 118、设计一个Hash Table
      你这个HASHTABLE会扩容吗？ 假设这个时候已经使用了1G内存，只剩下一点点内存，你如何扩容
 119、大数据解决问题：
@@ -813,3 +818,456 @@ int和Integer有什么别？
     https://www.cnblogs.com/yuandluck/p/9476123.html
 
 222、说说Xml、json的优缺点，分别有哪些现有的开源框架?
+    xml比json更重量级。
+    一般接口返回数据都是json，js可以用eval轻松解析json。
+    开源框架jackson。
+
+1. JDK 和 JRE 有什么区别？
+    JRE是java运行环境，有jvm，普通用户运行java。
+    JDK是java开发包，包括jre。还有一些其他的开发工具。开发者使用。
+
+2. == 和 equals 的区别是什么？
+    == 比较地址
+    equals()交给开发者自己去定义比较规则，Object中比较地址，String继承自Object并重写了equals，比较值。基本类型包装类中比较值。
+
+3. 两个对象的 hashCode()相同，则 equals()也一定为 true，对吗？
+    hashCode() 和 equals()都可以由开发者重写。
+    官方原则：1、两个对象equals相等，hashCode就要相等。
+             2、两个对象hashCode相等，不一定要求equals相等。
+
+4.final 在 java 中有什么作用？
+    final类不能被继承。
+    final方法不能被重写。
+    final成员变量必须声明的时候赋值或在构造函数中赋值。
+    final变量不能被再次赋值。引用的内容可以变化。
+    String和Integer都是final修饰的。为了安全和效率，用的多，非常底层的一个类。
+    被final修饰的函数会被直接插入到函数调用处，减少了函数调用的次数（类内部有个函数签名和函数地址的映射表）。但替换太多会导致内嵌之后的代码长度大大增加。增加了jvm解释字节码的时间。
+5.java 中的 Math.round(-1.5) 等于多少？
+    Math.round(-10.5)加0.5向下取整：-10
+    Math.ceil(-10.2) 取大 -10
+    Math.floor(-10.2) 取小 -11
+6.String 属于基础的数据类型吗？
+    String不属于基本数据类型。
+    基本数据类型：byte、short、int、long、float、double、char、boolean
+    byte: 1字节
+    short: 2字节
+    int：4字节
+    long: 8字节
+    float: 4字节
+    double: 8字节
+    char: 2字节
+7.java 中操作字符串都有哪些类？它们之间有什么区别？
+    String、StringBuilder、StringBuffer
+    String是不可变类，被声明为final，所有属性也都是final，对String对象的操作都会产生一个新的String对象。线程不安全
+    StringBuffer的操作在对象上操作。线程安全的可修改字符串序列。
+    StringBuilder线程不安全，其余和StringBuffer一样。
+    String、StringBuilder、StringBuffer底层是数组实现，JDK 9之前是char数组，之后是byte数组。
+    StringBuffer的线程安全是通过在修改数据的方法上都加上synchronized关键字实现的。
+    StringBuffer和StringBuilder都继承自AbstractStringBuilder。区别仅仅是方法上有无synchronized。
+    字符串缓存：使用intern()方法可以将字符串缓存起来, JVM一般会缓存字符串字面量、字符串常量，即字符串常量池。
+               永久代存在时候，字符串常量池在永久代中，其空间优先，基本不会被FullGC之外的垃圾收集照顾到。使用不但会有OOM。
+               永久代一出之后，缓存池被放到了堆中，这样就避免了永久代被占满的问题。
+               使用JVM参数-XX:+PrintStringTableStatistics可以打印字符串常量池（String table【https://www.jianshu.com/p/5524fce8b08f】）的大小。
+               使用JVM参数-XX:StringTableSize=N设置字符串常量池的大小。
+               Java 8 update 20中引入的字符串去重的特性，可不显示使用intern()，使用参数-XX:+UseG1GC -XX:+UseStringDeduplication，必须要使用G1垃圾回器。
+               字符串去重会去查找那些未被处理的字符串，计算它们的hash值（如果它没在应用的代码中被计算过的话），然后再看是否有别的字符串的hash值和底层的char[]都是一样的。如果找到的话——它会用一个新字符串的char[]来替换掉现有的这个char[]。
+               字符串缓存底层使用到了hash表StringTable，是一个固定大小的HashTable，基本你逻辑与java中HashMap相同，也使用拉链法解决碰撞。
+    String 自身的演化：低版本的String是char数组来存数组的。java中的char是两个byte大小，拉丁语系的字符根本不需要太宽的char。
+                      java 9中引入了Compact Strings的设计，使用byte数组加一个标识编码的coder（LATIN1、StringUTF16）来存储数据。
+                      只要有一个字符需要两个以上byte存储，所有的字符都会使用两个byte。
+    应用场景
+      [A]在字符串内容不经常发生变化的业务场景优先使用String类。例如：常量声明、少量的字符串拼接操作等。如果有大量的字符串内容拼接，避免使用String与String之间的“+”操作，因为这样会产生大量无用的中间对象，耗费空间且执行效率低下（新建对象、回收对象花费大量时间）。
+      [B]在频繁进行字符串的运算（如拼接、替换、删除等），并且运行在多线程环境下，建议使用StringBuffer，例如XML解析、HTTP参数解析与封装。
+      [C]在频繁进行字符串的运算（如拼接、替换、删除等），并且运行在单线程环境下，建议使用StringBuilder，例如SQL语句拼装、JSON封装等。
+
+8.String str="i"与 String str=new String("i")一样吗？
+    不一样，第一个"i"存储在字符串常量池，第二个"i"存储在java堆。
+
+9.如何将字符串反转？
+    (1) for循环中str.charAt(i)
+    (2) new StringBuilder(str).reverse()。StringBuffer也可以。
+    (3) str.toCharArray()
+    (4) str.getBytes()
+
+10.String 类的常用方法都有那些？
+    str.length()
+    str.isEmpty()
+    str.trim()
+    str.toCharArray()
+    str.getBytes()
+    str.intern()
+    str.compareTo()
+    str.concat()
+    str.contains()
+    str.replace()
+    str.split()
+    str.indexof()
+11.抽象类必须要有抽象方法吗？
+    抽象类能继承一个普通类（或抽象类），实现多个接口。
+    抽象类和普通类相比只是不能被实例化，只能作为子类的超类。
+    抽象类是用来捕捉子类的通用特性的，被用来创建继承层级里子类的模板。
+    可以有默认的方法实现。
+    抽象类可以有构造方法。
+    可以有main方法。
+    不必须有抽象方法。
+    ===接口===
+    接口能实现多个其他接口。
+    接口是抽象方法的集合，一个类实现了某个接口就必须实现抽象方法。
+    接口抽象方法默认修饰符是public（可以不写），不能使用其他修饰符。
+    java 8中接口可以包含具体的方法实现，方法实现必须default修饰。
+12.普通类和抽象类有哪些区别？
+    抽象类不能被实例化。
+    抽象类可以有构造方法。
+    抽象类可以有main方法。
+    抽象类可以有抽象方法。
+13.抽象类能使用 final 修饰吗？
+    final修饰的类不能被继承，抽象类只有被继承才能使用。
+15.java 中 IO 流分为几种？
+    字节流：按8位传输。所有文件的村塾都是按字节（byte）存储。字节流可以处理任何类型的IO操作，包括二进制。
+    字符流：字符流只能处理字符。包括Unicode字符（字节流不行）
+16.BIO、NIO、AIO 有什么区别？  
+    同步和异步：同步和异步关注的是消息通信机制。
+               同步：发起一个调用，在没得到结果之前，该调用就不返回，但是一旦调用返回，就得到返回值了。调用者主动等待这个调用的结果。
+               异步：调用发出后，不管有没有得到结果，该调用直接返回。被调用者其后会通知调用者。
+    阻塞与非阻塞：阻塞与非阻塞关注的是程序在等待调用结果时的状态。
+                阻塞：调用结果返回之前，当前线程会被挂起。调用线程只有在得到结果之后才返回。
+                非阻塞：调用不能立刻得到结果之前，该调用不会阻塞当前线程。
+    select与epoll、poll区别：
+                
+    BIO(同步阻塞IO)：
+            服务端：由一个独立的线程负责监听客户端的连接，它每次接收到客户端的连接请求后都会为该客户端创建一个新的线程，这个线程负责与对应的客户端进行数据收发。
+            客户端：向服务端发起请求，如果没有响应则会等待或收到拒绝请求。
+    AIO(同步非阻塞New IO或Non-Block IO)
+            通道Channel：对数据的读写都要通过Channel。
+            多路复用器Selector：Selector提供选择已经就绪的任务的能力，selector会不断轮询注册在其上的Channel，如果某个Channel上面发生读或写时间，
+                               这个Channel就处于就绪状态，会被Selector轮询出来，然后通过SelectionKey可以获取就绪Channel的集合，进行后续的IO操作。
+                               一个Selector可以同时轮询多个Channel，JDK使用epoll()代替了传统的select实现。只要一个线程负责Selector的轮询，就可以接入
+                               成千上万的客户端。
+                               “负责代替应用查询中所有已注册的通道到操作系统中进行IO事件轮询、管理当前注册的通道集合，定位发生事件的通道等操作”
+            代码：
+            server:
+                ...
+                // 打开通道
+                ServerSocketChannel server = ServerSocketChannel.open();
+                // 设为非阻塞
+                server.configureBlocking(false);
+                // 绑定端口
+                server.bind(new InetSocketAddress(10086));
+                // 获得一个selector
+                Selector selector = Selector.open();
+                // 将通道管理器和该通道绑定，并为该通道注册SelectionKey.OP_ACCEPT事件，注册时间后，
+                // 当该事件到达时，selector.select()就会返回，如果该事件没有到达，selector.select()会一直阻塞
+                server.register(selector, SelectionKey.OP_ACCEPT)
+                Systom.out.pringln("等待客户端连接");
+
+                // 采用轮询的方式监听selector上是否有需要处理的事件，如果有，则进行处理
+                while(true){
+                    // 当注册的事件到达时，方法返回，否则，该方法会一直阻塞。
+                    selector.select();
+                    // 获得selector中选中的项的迭代器，选中的项为注册的事件
+                    Itreator<SelectionKey> ite = selector.selectedKeys().iterator();
+                    while(ite.hashNext()){
+                        SelectionKey key = (SelectionKey)ite.next();
+                        // 删除已选的key，以防重复处理
+                        ite.remove();
+
+                        if(key.isAcceptable()){ // 客户端连接事件
+                            ServerSocketChannel serverSocketChannel = (ServerSocketChannel)key.channel();
+                            // 获得和客户端连接的通道
+                            SocketChannel channel = serverSocketChannel.accept();
+                            // 设为非阻塞
+                            channel.configureBlocking(false);
+                            // 在这里可以给客户端发送信息
+                            channel.write(ByteBuffer.wrap(new String("客户端你好").getBytes("utf-8")));
+                            // 在客户端连接成功之后，为了可以接收到客户端的信息，需要给通道设置读的权限。
+                            channel.register(selector, SelectionKey.OP_READ);
+                        }else if(key.isReadable()){ // 获得可读事件
+                            // 服务器可读信息：得到事件发生的Socket通道
+                            SocketChannel channel = (SocketChannel)key.channel();
+                            // 创建读取的缓冲区
+                            ByteBuffer buffer = ByteBuffer.allocate(512);
+                            channel.read(buffer);
+                            byte[] data = buffer.array();
+                            String msg = new String(data).trim();
+                            System.out.println("接收到客户端发来的数据：" + msg);
+                        }
+                    }
+                }
+                ...
+                将新接入的客户端连接注册到Reactor线程的Selector上，监听读操作。
+                异步读取客户端消息到缓冲区。
+                将应答消息编码为Buffer，调用SocketChannel的write将消息异步发送给客户端。
+    AIO(异步非阻塞IO)：
+                采用“订阅-通知”模式：即应用程序向操作系统注册IO监听，然后继续做自己的事。当操作系统发生IO事件，并且准备好数据后，在主动通知应用程序，触发相应的函数。
+
+17.Files的常用方法都有哪些？
+    createNewFile() 创建新文件
+    mkdirs() 创建新的目录，若父目录不存在，会自动创建
+    renameTo(File dest)重命名文件
+    isFile()判断是否是文件
+    isDirectory() 判断是否是目录
+    exists() 判断文件或者目录是否存在
+    canRead() 判断文件是否可读
+    canWrite() 判断文件是否可写
+    isHidden() 判断文件是否隐藏
+
+    getAbsolutePath() 获取绝对路径
+    getPath()获取相对路径
+    getName()获取文件或目录
+    length() 获取文件大小
+    lastModified() 获取文件最后一次修改的时间
+    list()获取路径表示目录下的所有文件和目录名称
+    list(FilenameFilter filter) 获取满足过滤器FilenameFilter条件的所有目录或文件
+    listFiles() 获取路径表示目录下的所有文件和目录对象
+    listFiles(FilenameFilter filter) 获取满足过滤器FilenameFileter条件的所有目录或文件对象
+18.java 容器都有哪些？
+19.Collection 和 Collections 有什么区别？
+    Collection是集合类的一个顶级接口。
+    Collections是集合类的一个工具类：
+        Collections.sort(list) 排序
+        Collections.shuffle(list) 混排
+        Collections.reverse(list) 反转
+        Collections.fill(List list, Object o) 替换所有元素
+        Collections.copy(List list1, List list2) 将list2中的元素全部复制到list1中，并覆盖相应索引的元素。
+        Collections.min(Collection, Comparator)
+        Collections.max(Collection, Comparator) 根据指定比较器产生的顺序，返回指定Collectiond的最小（大）
+    Arrays同样也是数组工具类。
+
+35.并行和并发有什么区别？
+    单个CPU执行多个线程，多个线程按时间片轮流执行就是并发。每一时刻，只会有一个线程被执行。
+    多个CPU同时执行多个线程是并行，同一时刻可以有多个线程在执行。
+36.线程和进程的区别？
+    进程是资源（cpu、内存等）分配的最小单位，线程是程序执行的最小单位。
+    一个进程可以有多个线程。
+    进程粒度比线程大。
+37.守护线程是什么？
+    只有当最后一个非守护线程结束时，守护线程才会随着JVM一同结束。
+    GC是守护线程。
+    childThread.setDaemon(true);必须在childThread.start();之前。
+    在Daemon线程中产生的新线程也是Daemon的。
+    java的线程池会将守护线程转换为用户线程。
+
+    public class DeamonTest {
+        public static void main(String[] args) {
+            Thread mainThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Thread childThread = new Thread(new ChildThread());
+                    // 将childThread设置为守护线程。
+                    // mainThread线程退出后，守护线程也即退出
+                    childThread.setDaemon(true);
+                    childThread.start();
+                    System.out.println("DeamonTest.run");
+                }
+            });
+            mainThread.start();
+        }
+    }   
+38.创建线程有哪几种方式？
+    1) 继承Thread
+    2) 实现Runnable
+    3) Callable和FutureTask
+        1)和2)的缺陷是：在执行完任务之后无法获取执行结果。
+        
+        FutureTask是一种可以取消的异步的计算任务。它的计算是通过Callable实现的，等价于可以携带结果的Runnable。
+        有三个状态：等待、运行、完成（完成包括所有计算以任意的方式结束(正常结束、取消、异常)）。
+        主要方法：
+            1、get() 获取结果只有在计算完成时获取，否则一直阻塞直到任务转入完成状态。
+    https://www.cnblogs.com/dolphin0520/p/3949310.html
+    http://www.importnew.com/30531.html
+        
+        FutureTask实现了Runnable和Future
+
+        public class MyCallable implements Callable<String> {
+            private int count = 20;
+
+            @Override
+            public String call() throws Exception {
+                for (int i = count; i >0 ; i--) {
+                    System.out.println(Thread.currentThread().getName()+"当前票数：" + i);
+                }
+                return "sale out";
+            }
+
+            public static void main(String[] args) throws ExecutionException, InterruptedException {
+                Callable<String> callable = new MyCallable();
+                FutureTask<String> futureTask = new FutureTask<>(callable);
+                Thread mThread = new Thread(futureTask);
+                Thread mThread2 = new Thread(futureTask);
+                Thread mThread3 = new Thread(futureTask);
+                mThread.start();
+                mThread2.start();
+                mThread3.start();
+                System.out.println(futureTask.get());
+            }
+        }
+
+39.说一下 runnable 和 callable 有什么区别？
+    1、Runnable线程体在run()中，callable线程体在call()中。
+    2、Callable接口支持返回线程执行结果，通过FutureTask.get()方法获取执行结果，get方法会阻塞直到结果返回。
+    3、Runnable没有返回值。Callable + FutureTask 可以获取多线程运行的结果，也可以在等待太长时间没有获取到需要的数据的情况下取消该线程的任务。
+
+40.线程有哪些状态？
+    1、新建（NEW）：实现Runnable接口和继承Thread可以得到一个线程类，new一个实例，线程就进入了新建状态，即 start() 之前的状态。
+    2、可运行（RUNNABLE）：
+            有资格运行，但还没运行，等待调度。
+            调用线程的start()方法。
+            当前线程的sleep()结束。
+            其他线程join()结束。
+            调用当前线程的yield()方法。
+    3、运行（RUNNING）
+            线程调度程序从可运行池中选择一个线程设置为当前线程，这是线程进入运行状态的唯一方式。
+    4、阻塞（BLOCKED）
+            当前线程调用Thread.sleep()。
+            运行在当前线程的其他线程调用join()方法。
+            等待用户输入的时候。
+    5、死亡（DEAD）
+            线程的run()方法完成时，就死去了，死去的线程不能复生。
+            或程序退出。
+
+41.sleep() 和 wait() 有什么区别？
+    ====sleep()====
+    sleep()是线程类Thread的方法；
+    调用sleep()不会释放锁，阻塞线程，直到时间到后再度执行。
+    ====wait()====
+    而wait()是Object的方法。
+    wait要持有锁，只能在同步方法或同步块中调用。调用锁资源的wait()方法。
+    调用wait()会释放锁，需要调用notify/notifyAll后重新获取对象锁资源后才能继续执行。
+
+42.notify()和 notifyAll()有什么区别？
+    notify()唤醒在此监视器上等待的一个线程。
+    notifyAll()唤醒在此监视器上等待的全部线程。
+    但都要等到当前线程释放锁之后，被唤醒的线程才有可能执行。
+
+43.线程的 run()和 start()有什么区别？
+    调用Thread的start()方法，可以异步启动线程，但启动的线程不会马上运行，会放到等待队列中等待CPU调度。只有线程被CPU调度才会调用run()方法执行。
+    线程的逻辑写在run()。线程创建后只有调用start()之后才能进入可运行状态，等待调度执行。
+    可直接调用run()方法。
+
+44.创建线程池有哪几种方式？
+    newSingleThreadExecutor
+    创建一个单线程的线程池。这个线程池只有一个线程在工作，也就是相当于单线程串行执行所有任务。如果这个唯一的线程因为异常结束，那么会有一个新的线程来替代它。此线程池保证所有任务的执行顺序按照任务的提交顺序执行。
+    
+    newFixedThreadPool
+    创建固定大小的线程池。每次提交一个任务就创建一个线程，直到线程达到线程池的最大大小。线程池的大小一旦达到最大值就会保持不变，如果某个线程因为执行异常而结束，那么线程池会补充一个新线程。
+    
+    newCachedThreadPool
+    创建一个可缓存的线程池。如果线程池的大小超过了处理任务所需要的线程，
+    那么就会回收部分空闲（60秒不执行任务）的线程，当任务数增加时，此线程池又可以智能的添加新线程来处理任务。此线程池不会对线程池大小做限制，线程池大小完全依赖于操作系统（或者说JVM）能够创建的最大线程大小。
+    
+    newScheduledThreadPool
+    创建一个大小无限的线程池。此线程池支持定时以及周期性执行任务的需求。
+
+45.线程池都有哪些状态？
+
+46.线程池中 submit()和 execute()方法有什么区别？
+    创建并开启一个线程开销很大，线程池可以避免频繁创建关闭线程，以缓解性能问题。
+    线程在被使用前就存在线程池，执行完任务后，线程返回线程池等待下次使用。
+    java通过executor对象来实现自己的线程池模型，可以使用exector接口或其他线程池的实现。
+
+    execute(Runnable x) 没有返回值。可以执行任务，但无法判断任务是否成功完成。——实现Runnable接口
+    submit(Runnable x) 返回一个future。可以用这个future来判断任务是否成功完成。——实现Callable接口
+
+    =============接口Executor==========================
+    ```
+    简单使用:
+    public class mainTest {
+        public static void main(String[] args) {
+            Executor executor = Executors.newSingleThreadExecutor();
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("mainTest.run");
+                }
+            });
+        }
+    }
+    ```
+    如果有工作线程可用，execute()方法将执行语句，否则就把Runnable任务放进队列，等待线程可用。
+    
+    Executors类里的工厂方法可以创建很多类型的线程池（最终构建线程池使用ThreadPoolExecutor）：
+    newSingleThreadExecutor()：包含单个线程和无界队列的线程池，同一时间只能执行一个任务。
+    newFixedThreadPoll()：包含固定数量线程并共享无界队列的线程池；当所有线程处于工作状态，有新任务提交时，任务在队列中等待，直到一个线程变为可用状态。
+    newCacheThreadPool()：只有需要时创建新线程的线程池。
+    newWorkStealingThreadPool()：基于工作窃取算法的线程池。
+
+    ====================接口ExecutorService===============
+    ExecutorService是Executor的子接口，其定义了更多的方法。
+    submit()方法可以返回Furute对象。
+    
+    ===================接口ScheduledExecutorService========
+    ScheduledExecutorService是ExecutorService的一个子接口，增加了调度任务的方法。
+    sechedule()方法的参数指定执行的方法、延时和TimeUnit
+    
+    ```
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(10);
+    Future<Double> future = executor.schedule(callableTask, 2, TimeUnit.MILLISECONDS); 
+    ```
+    =================ThreadPoolExecutor和ForkJoinPool==============
+    ExecutorService的两个实现。
+
+74.throw 和 throws 的区别？
+    throws 是用来声明一个方法可抛出的所有异常信息，throws是将异常声明但不处理，而是将异常往上传，传给调用者。
+    throw 抛出一个具体的异常类型。
+    一个异常要么向上抛（throws）给调用者去处理，要么自身捕获（try{}catch(Exception e){}），自己去处理
+75.final、finally、finalize 有什么区别？
+    final修饰的类不能被继承。
+    final修饰的成员变量要赋值初始化或在构造方法中赋值。
+    final修饰的局部变量必须要赋值初始化，并且不能修改。
+    final修饰的方法会被JVM优化。
+    GC前对象会调用finalize，可在finalize中将自身（this）赋值给其他变量从而起死回生。
+76.try-catch-finally 中哪个部分可以省略？
+    1) finally可以省略。finally块最终都会执行。
+    2) 关闭资源的操作放到finally中，因为try块中抛出异常后不会继续向下执行。程序可能无法到达try的尾部，但一定会到达finally。
+    3) 不要捕获Throwable，Throwable是所有exceptions和errors的父类。不仅捕获所有异常而且捕获所有错误。
+       这些错误由JVM抛出，用来表明不打算应用程序处理的严重错误。比如OutOfMemoryError和StackOverflowError。
+       折中方法是在底层捕获Throwable，其他层级捕获Exception。
+    4) try-with-resource 自动关闭外部资源。资源句柄要实现AutoCloseable接口。
+        try (FileInputStream inputStream = new FileInputStream(new File("test"))) {
+            System.out.println(inputStream.read());
+        } catch (IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+77.try-catch-finally 中，如果 catch 中 return 了，finally 还会执行吗？
+    照样执行
+
+78.常见的异常类有哪些？
+    Throwable是所有异常或错误的超类。
+    Error是Throwable的子类。
+    Exception是Throwable的子类。
+        异常分为两大类：
+            Checked异常：非Runtime异常。用户代码显式抛出的异常。要么throws exception，要么try...catch捕获。
+                    f(){
+                        int a = 123;
+                        if(a = 1233){
+                            throw new NullPointerException();
+                        }
+                    }
+                    f()的调用者要么向上抛异常(throws)，要么处理异常（try..catch）。
+            Runtime异常：所有RuntimeException类及其子类的实例被称为Runtime异常。不可预见的异常，在运行时候抛出。
+    常见运行时异常：
+        ClassCastException(类转换异常)：
+            instanceof：判断一个对象是否为一个类的实例。obj instanceog Class。
+                        1、obj必须为引用类型，不能是基本类型。
+                        2、obj为null返回false。
+                        3、obj为类或接口的直接或间接子类，返回true。
+                        4、
+                            ArrayList arrayList = new ArrayList();
+                            arrayList instanceof List;  // true
+                            List list = new ArrayList();
+                            list instanceof ArrayList; // true
+        ArrayIndexOutOfBoundsException(数据越界异常)
+                访问不不在的数组索引，或设置了负数索引。
+        NullPointerException(空指针异常)
+                public class mainTest {
+                    public static void main(String[] args)  {
+                        Person person = new Person(2,"saisai");
+                        person = null;
+                        System.out.println(person.getAge());
+                    }
+                }
+                使用前判断是否为空（null）。
+                亦可使用Optional优雅地决绝判断null的多层嵌套。
+        ArrayStoreException(数据存储异常)
+        BufferOverflowException(缓冲溢出异常)
