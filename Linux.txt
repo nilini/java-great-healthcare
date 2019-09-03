@@ -21,3 +21,63 @@
     diff:
         diff -c file1 file2 同时显示
         diff -y file1 file2 并列显示
+
+2、用一行命令输出正在运行的java进程。
+    ps -ef | grep java
+    ps -ef 显示所有命令，连带命令行
+    
+    UID    PID PPID C STIME TTY     TIME CMD
+    root     1   0 0 10:22 ?    00:00:02 /sbin/init
+    root     2   0 0 10:22 ?    00:00:00 [kthreadd]
+
+    UID: 进程所有者的用户
+    PID: 进程ID
+    PPID: 父进程ID
+
+3、top 命令之后有哪些内容，有什么作用。
+
+4、线上CPU爆高，请问你如何找到问题所在。
+    如何定位是哪个服务进程导致CPU过载，哪个线程导致CPU过载，哪段代码导致CPU过载？
+    https://blog.csdn.net/zhang89xiao/article/details/77852506
+    https://blog.csdn.net/jiangzhexi/article/details/77429671
+
+5、select epoll poll
+
+6、大的log文件中，统计异常出现的次数、排序，或者指定输出多少行多少列的内容。
+
+7、linux下的调查问题思路：内存、CPU、句柄数、过滤、查找、模拟POST和GET请求等等场景
+
+8、如何在 Windows 和 Linux 上查找哪个线程使用的 CPU 时间最长
+
+9、使用什么命令来确定是否有 Tomcat 实例运行在机器上
+
+10、Java中如何获取到线程dump文件
+    死循环、死锁、阻塞、页面打开慢等问题，打线程dump是最好的解决问题的途径。所谓线程dump也就是线程堆栈，获取到线程堆栈有两步：
+    1）获取到线程的pid，可以通过使用jps命令，在Linux环境下还可以使用ps -ef | grep java
+    2）打印线程堆栈，可以通过使用jstack pid命令，在Linux环境下还可以使用kill -3 pid
+    另外提一点，Thread类提供了一个getStackTrace()方法也可以用于获取线程堆栈。这是一个实例方法，因此此方法是和具体线程实例绑定的，每次获取获取到的是具体某个线程当前运行的堆栈。
+
+11、这是一个比较偏实践的问题，这种问题我觉得挺有意义的。可以这么做：
+    （1）获取项目的pid，jps或者ps -ef | grep java，这个前面有讲过
+    （2）top -H -p pid，顺序不能改变
+    这样就可以打印出当前的项目，每条线程占用CPU时间的百分比。注意这里打出的是LWP，也就是操作系统原生线程的线程号，我笔记本山没有部署Linux环境下的Java工程，因此没有办法截图演示，网友朋友们如果公司是使用Linux环境部署项目的话，可以尝试一下。
+    使用"top -H -p pid"+"jps pid"可以很容易地找到某条占用CPU高的线程的线程堆栈，从而定位占用CPU高的原因，一般是因为不当的代码操作导致了死循环。
+    最后提一点，"top -H -p pid"打出来的LWP是十进制的，"jps pid"打出来的本地线程号是十六进制的，转换一下，就能定位到占用CPU高的线程的当前线程堆栈了。
+
+12、简述Linux中安装软件的几种方式？wget如何断点续传？
+
+13、linux中awk命令的使用？
+
+14、linux中如何监控和查看内存、cpu情况？
+
+15、Linux中如何配置网络？网络模式有哪些？
+
+16、说说Linux的各个顶级目录的含义
+    /bin 存放二进制可执行文件（ls cat mk等）
+    /etc 存放系统
+    /var 存放运行时需要改变数据的文件（日志）
+    /opt 额外安装的可选应用
+
+17、Linux下如何查看CPU负载和IO端口的使用情况？
+
+18、说几个vim的命令。

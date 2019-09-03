@@ -1,0 +1,815 @@
+1、JAVA中的几种基本数据类型是什么，各自占用多少字节。
+    String不属于基本数据类型。
+    基本数据类型：byte、short、int、long、float、double、char、boolean
+    byte: 1字节
+    
+    short: 2字节
+    char: 2字节
+    
+    int：4字节
+    float: 4字节
+
+    long: 8字节
+    double: 8字节
+
+    boolean：单个的boolean类型变量在编译的时候使用int类型（4字节）；
+             boolean类型的数组时，在编译的时候是作为byte array来编译的，所以boolean数组里面的每一个元素占一个字节。
+             
+2、String类能被继承吗，为什么。
+    不能，String类是被final修饰的。final修饰的类不能被继承。
+
+3、String，Stringbuffer，StringBuilder的区别。
+    String是不可变类，线程安全，对String进行操作时总是创建新的字符串。
+    StringBuffer是可变类，线程安全。方法上都加了synchronized，而StringBuilder没有。
+    StringBuilder是可变类，线程不安全。
+
+4、ArrayList和LinkedList有什么区别。
+    ArrayList：底层基于动态数组，根据下标随机访问效率高，插入元素还要移动元素效率低。
+    LinkedList：底层基于双向链表，插入删除只需要移动指针效率高，查找需要遍历效率低。
+
+5、讲讲类的实例化顺序，比如父类静态数据，构造函数，字段，子类静态数据，构造函数，字段，当new的时候，他们的执行顺序。
+    单类：静态变量（静态初始块） > 成员变量（非静态初始块）> 构造器
+    父类子类：父类静态变量（父类静态初始块）> 子类静态变量（子类静态初始块 ）> 父类成员变量（ 父类非静态初始块） > 父类构造器 > 子类成员变量（子类非静态初始块）> 子类构造器
+    静态变量和静态初始化快的初始化顺序和类中定义的顺序一致。
+    成员变量和非静态初始化块初始化顺序和类中定义的顺序一致。
+
+6、用过哪些Map类，都有什么区别，HashMap是线程安全的吗,并发下使用的Map是什么，他们内部原理分别是什么，比如存储方式，hashcode，扩容，默认容量等。
+    HashMap、LinkedMap、TreeMap
+    HashMap：底层数组 + 单链表（链表长度大于8时转为红黑树），每一个数组元素都是一个链表。遍历无序。
+    LinkedHashMap：底层数组 + 双向链表。通过指针关联各个元素，遍历有序。
+    TreeMap：底层红黑树实现，可排序。默认按照key的字典顺序来排序，也可以自定义排序规则（实现Comparator接口）
+
+    HashMap线程不安全，多线程环境下使用ConcurrentHashmap来替换HashMap。ConcurrentHashMap将数据分为多个segment（默认16个），
+    然后每次操作对一个segment加锁，每个segment都有一个自己的锁，只要多个线程访问的不是同一个segment就没有锁争用，就没有阻塞，也就是
+    允许16个线程并发的更新而尽量没有锁争用。
+
+7、JAVA8的ConcurrentHashMap为什么放弃了分段锁，有什么问题吗，如果你来设计，你如何设计。
+    java 5之后，JDK引入了java.util.concurrent并发包，其中最常用的就是ConcurrentHashMap了，它的原理是引用了内部的Segment分段锁，
+    保证在操作不同段map的时候，可以并发执行，操作通断map的时候，进行锁的竞争和等待，从而达到线程安全。
+    但是java 8之后，JDK放弃了Segment，使用了synchronized。
+    
+    put的时候，首先通过hash找到对应链表过后，查看是否是第一个Object，如果是，直接用cas原则插入，无需加锁。
+    如果不是链表第一个object，则直接用链表第一个object加synchronized锁，会一致用第一个object为锁，直到重新计算map大小。
+
+8、有没有有顺序的Map实现类，如果有，他们是怎么保证有序的。
+    LinkedHashMap底层实现是数组+单向链表+双向链表。
+    数组+单向链表就是HashMap结构，记录数据用。
+    双向链表存储插入顺序用。
+
+9、抽象类和接口的区别，类可以继承多个类么，接口可以继承多个接口么,类可以实现多个接口么。
+    java类不支持多继承，但是可以实现多个接口。
+    接口可以继承多个接口。
+
+10、继承和聚合的区别在哪。
+    继承：类与类之间；接口与接口之间。
+    实现：类实现接口（可以多个）。
+
+11、IO模型有哪些，讲讲你理解的nio ，他和bio，aio的区别是啥，谈谈reactor模型。
+    208道.txt
+
+12、反射的原理，反射创建类实例的三种方式是什么。
+    可以在运行时判断一个对象所属的类，构造一个类的对象，判断类具有的成员变量和方法，调用1个对象的方法。
+    4个关键的类：Class，Constructor，Field，Method。    
+    getConstructor获得构造函数/getDeclardConstructor； 
+    getField/getFields/getDeclardFields获得类所生命的所有字段；
+    getMethod/getMethods/getDeclardMethod获得类声明的所有方法，正常方法是一个类创建对象，而反射是1个对象找到1个类。
+    获取class对象：
+        1，new student().getClass();
+        2，Student.class;
+        3，Class.forName("Student");
+    通过Class对象获取Constructor，Field，Method。
+    spring中IOC通过xml配置实例化对象，用到了反射。
+    spring中的注解：首先解析所有属性，判断属性上是否存在指定注解，如果存在则根据搜索规则取得bean，然后利用反射原理注入。如果标注在字段上面，也可以通过字段的反射技术取得注解，根据搜索规则取得bean，然后利用反射技术注入。
+
+13、反射中，Class.forName和ClassLoader区别 。
+    ClassLoader.loadClass()也加载到JVM，但是不会执行static块，并且只有调用了new Instance方法才会调用构造函数。
+
+14、描述动态代理的几种实现方式，分别说出相应的优缺点。
+    基于JDK的实现和基于Cglib的实现
+15、动态代理与cglib实现的区别。
+    基于JDK的动态代理，需要实现一个或多个接口（InvocationHandler）；
+    Cglib的方式可以代理任意一个目标类，但对final类和方法无法处理。
+    JDK动态代理只代理接口，因为在调用Proxy.newProxyInstance()的时候需要传入目标类的接口类，而Cglib不做此限制。
+    Cglib既可以代理接口又可以代理实现类。
+
+    JDK动态代理机制是委托机制，动态实现接口类，在动态生成的实现类里面委托为handler去调用原始实现类。
+    Cglib则使用继承机制，被代理类和代理类是继承关系。
+16、为什么CGlib方式可以对接口实现代理。
+
+17、final的用途。
+    final类不能被继承。
+    final方法不能被重写。
+    final成员变量必须声明的时候赋值或在构造函数中赋值。
+    final变量不能被再次赋值。引用的内容可以变化。
+    String和Integer都是final修饰的。为了安全和效率，用的多，非常底层的一个类。
+    被final修饰的函数会被直接插入到函数调用处，减少了函数调用的次数（类内部有个函数签名和函数地址的映射表）。但替换太多会导致内嵌之后的代码长度大大增加。增加了jvm解释字节码的时间。
+
+18、写出三种单例模式实现。
+    简单工厂、工厂方法、抽象工厂
+    单例模式
+    代理模式
+19、如何在父类中为子类自动完成所有的hashcode和equals实现？这么做有何优劣。
+
+20、请结合OO设计理念，谈谈访问修饰符public、private、protected、default在应用设计中的作用。
+21、深拷贝和浅拷贝区别。
+22、数组和链表数据结构描述，各自的时间复杂度。
+23、error和exception的区别，CheckedException，RuntimeException的区别。
+24、请列出5个运行时异常。
+25、在自己的代码中，如果创建一个java.lang.String类，这个类是否可以被类加载器加载？为什么。
+26、说一说你对java.lang.Object对象中hashCode和equals方法的理解。在什么场景下需
+27、要重新实现这两个方法。
+28、在jdk1.5中，引入了泛型，泛型的存在是用来解决什么问题。
+29、这样的a.hashcode() 有什么用，与a.equals(b)有什么关系。
+30、有没有可能2个不相等的对象有相同的hashcode。
+31、Java中的HashSet内部是如何工作的。
+32、什么是序列化，怎么序列化，为什么序列化，反序列化会遇到什么问题，如何解决。
+33、java7、java8的新特性。
+34、常用的异常类型?
+35、反射中，Class.forName和classloader的区别
+36、session和cookie的区别和联系，session的生命周期，多个服务部署时session管理。
+37、Java中的队列都有哪些，有什么区别。
+38、Java数组和链表两种结构的操作效率，在哪些情况下(从开头开始，从结尾开始，从中间开始)，哪些操作(插入，查找，删除)的效率高
+39、HashMap的源码，实现原理，底层结构。
+40、动态代理的几种方式
+41、HashMap的并发问题
+42、了解LinkedHashMap的应用吗
+43、cloneable接口实现原理，浅拷贝or深拷贝
+44、Java NIO使用
+45、hashtable和hashmap的区别及实现原理，hashmap会问到数组索引，hash碰撞怎么解决
+46、arraylist和linkedlist区别及实现原理
+47、反射中，Class.forName和ClassLoader区别
+48、String，Stringbuffer，StringBuilder的区别？
+49、有没有可能2个不相等的对象有相同的hashcode
+50、TreeMap的实现原理
+51、什么是基于注解的切面实现
+52、什么是 对象/关系 映射集成模块
+53、什么是 Java 的反射机制
+54、Cookie 和 Session的区别
+55、fail-fast 与 fail-safe 机制有什么区别
+56、get 和 post请求的区别
+57、Interface 与 abstract 类的区别
+58、IO 和 NIO的区别，NIO优点
+59、JRE、JDK、JVM 及 JIT 之间有什么不同
+60、一个”.java”源文件中是否可以包含多个类（不是内部类）？有什么限制
+61、简单说说你了解的类加载器。是否实现过类加载器
+62、什么是finalize()方法？
+63、finalize()方法什么时候被调用
+64、析构函数(finalization)的目的是什么
+65、final 和 finalize 的区别
+66、final关键字有哪些用法
+    final 与 static 关键字可以用于哪里？它们的作用是什么
+    final, finally, finalize的区别
+    final、finalize 和 finally 的不同之处？
+    能否在运行时向 static final 类型的赋值
+    使用final关键字修饰一个变量时，是引用不能变，还是引用的对象不能变
+    一个类被声明为final类型，表示了什么意思
+
+67、throws, throw, try, catch, finally分别代表什么意义
+68、Java 有几种修饰符？分别用来修饰什么
+69、super什么时候使用
+70、public static void 写成 static public void会怎样
+    说明一下public static void main(String args[])这段声明里每个关键字的作用
+    请说出作用域public, private, protected, 以及不写时的区别
+71、sizeof 是Java 的关键字吗
+
+72、static
+    static class 与 non static class的区别
+    static 关键字是什么意思？Java中是否可以覆盖(override)一个private或者是static的方法
+    静态类型有什么特点
+    main() 方法为什么必须是静态的？能不能声明 main() 方法为非静态
+    是否可以从一个静态（static）方法内部发出对非静态（non-static）方法的调用
+    静态变量在什么时候加载？编译期还是运行期？静态代码块加载的时机呢
+    成员方法是否可以访问静态变量？为什么静态方法不能访问成员变量
+
+73、switch
+    switch 语句中的表达式可以是什么类型数据
+    switch 是否能作用在byte 上，是否能作用在long 上，是否能作用在String上
+
+74、while 循环和 do 循环有什么不同
+75、操作符
+    &操作符和&&操作符有什么区别?
+    a = a + b 与 a += b 的区别？
+    逻辑操作符 (&,|,^)与条件操作符(&&,||)的区别
+    3*0.1 == 0.3 将会返回什么？true 还是 false？
+    float f=3.4; 是否正确？
+    short s1 = 1; s1 = s1 + 1;有什么错?
+76、基本类型
+    基础类型(Primitives)与封装类型(Wrappers)的区别在哪里
+    简述九种基本数据类型的大小，以及他们的封装类
+    int 和 Integer 哪个会占用更多的内存？ int 和 Integer 有什么区别？parseInt()函数在什么时候使用到
+    float和double的默认值是多少
+    如何去小数四舍五入保留小数点后两位
+    char 型变量中能不能存贮一个中文汉字，为什么
+
+77、类型转换
+    怎样将 bytes 转换为 long 类型
+    怎么将 byte 转换为 String
+    如何将数值型字符转换为数字
+    我们能将 int 强制转换为 byte 类型的变量吗？如果该值大于 byte 类型的范围，将会出现什么现象
+    能在不进行强制转换的情况下将一个 double 值赋值给 long 类型的变量吗
+    类型向下转换是什么
+
+78、数组
+    如何权衡是使用无序的数组还是有序的数组
+    怎么判断数组是 null 还是为空
+    怎么打印数组？ 怎样打印数组中的重复元素
+    Array 和 ArrayList有什么区别？什么时候应该使用Array而不是ArrayList
+    数组和链表数据结构描述，各自的时间复杂度
+    数组有没有length()这个方法? String有没有length()这个方法
+
+79、队列
+    队列和栈是什么，列出它们的区别
+    BlockingQueue是什么
+    简述 ConcurrentLinkedQueue LinkedBlockingQueue 的用处和不同之处。
+    ArrayList、Vector、LinkedList的存储性能和特性
+
+80、ByteBuffer 与 StringBuffer有什么区别
+
+81、HashMap
+    HashMap的工作原理是什么
+    内部的数据结构是什么
+    HashMap 的 table的容量如何确定？loadFactor 是什么？ 该容量如何变化？这种变化会带来什么问题？
+    HashMap 实现的数据结构是什么？如何实现
+    HashMap 和 HashTable、ConcurrentHashMap 的区别
+    HashMap的遍历方式及效率
+    HashMap、LinkedMap、TreeMap的区别
+    如何决定选用HashMap还是TreeMap
+    如果HashMap的大小超过了负载因子(load factor)定义的容量，怎么办
+    HashMap 是线程安全的吗？并发下使用的 Map 是什么，它们内部原理分别是什么，比如存储方式、 hashcode、扩容、 默认容量等
+    HashSet
+
+    HashSet和TreeSet有什么区别
+    HashSet 内部是如何工作的
+    WeakHashMap 是怎么工作的？
+
+82、Set
+    Set 里的元素是不能重复的，那么用什么方法来区分重复与否呢？是用 == 还是 equals()？ 它们有何区别?
+    TreeMap：TreeMap 是采用什么树实现的？TreeMap、HashMap、LindedHashMap的区别。TreeMap和TreeSet在排序时如何比较元素？Collections工具类中的sort()方法如何比较元素？
+    TreeSet：一个已经构建好的 TreeSet，怎么完成倒排序。
+    EnumSet 是什么
+
+83、Hash算法
+    Hashcode 的作用
+    简述一致性 Hash 算法
+    有没有可能 两个不相等的对象有相同的 hashcode？当两个对象 hashcode 相同怎么办？如何获取值对象
+    为什么在重写 equals 方法的时候需要重写 hashCode 方法？equals与 hashCode 的异同点在哪里
+    a.hashCode() 有什么用？与 a.equals(b) 有什么关系
+    hashCode() 和 equals() 方法的重要性体现在什么地方
+    Object：Object有哪些公用方法？Object类hashcode,equals 设计原则？ sun为什么这么设计？Object类的概述
+    如何在父类中为子类自动完成所有的 hashcode 和 equals 实现？这么做有何优劣。
+    可以在 hashcode() 中使用随机数字吗？
+
+84、LinkedHashMap
+    LinkedHashMap 和 PriorityQueue 的区别是什么
+
+85、List
+    List, Set, Map三个接口，存取元素时各有什么特点
+    List, Set, Map 是否继承自 Collection 接口
+    遍历一个 List 有哪些不同的方式
+    LinkedList
+    LinkedList 是单向链表还是双向链表
+    LinkedList 与 ArrayList 有什么区别
+    描述下 Java 中集合（Collections），接口（Interfaces），实现（Implementations）的概念。LinkedList 与 ArrayList 的区别是什么？
+    插入数据时，ArrayList, LinkedList, Vector谁速度较快？
+    ArrayList
+    ArrayList 和 HashMap 的默认大小是多数
+    ArrayList 和 LinkedList 的区别，什么时候用 ArrayList？
+    ArrayList 和 Set 的区别？
+    ArrayList, LinkedList, Vector的区别
+    ArrayList是如何实现的，ArrayList 和 LinkedList 的区别
+    ArrayList如何实现扩容
+    Array 和 ArrayList 有何区别？什么时候更适合用Array
+    说出ArraList,Vector, LinkedList的存储性能和特性
+
+86、Map
+    Map, Set, List, Queue, Stack
+    Map 接口提供了哪些不同的集合视图
+    为什么 Map 接口不继承 Collection 接口
+
+87、Collections
+    介绍Java中的Collection FrameWork。集合类框架的基本接口有哪些
+    Collections类是什么？Collection 和 Collections的区别？Collection、Map的实现
+    集合类框架的最佳实践有哪些
+    为什么 Collection 不从 Cloneable 和 Serializable 接口继承
+    说出几点 Java 中使用 Collections 的最佳实践？
+    Collections 中 遗留类 (HashTable、Vector) 和 现有类的区别
+
+88、什么是 B+树，B-树，列出实际的使用场景。
+
+89、接口
+    Comparator 与 Comparable 接口是干什么的？列出它们的区别
+
+90、对象
+    拷贝(clone)
+    如何实现对象克隆
+    深拷贝和浅拷贝区别
+    深拷贝和浅拷贝如何实现激活机制
+    写clone()方法时，通常都有一行代码，是什么
+
+    比较
+    在比较对象时，”==” 运算符和 equals 运算有何区别
+    如果要重写一个对象的equals方法，还要考虑什么
+    两个对象值相同(x.equals(y) == true)，但却可有不同的hash code，这句话对不对
+
+    构造器
+    构造器链是什么
+    创建对象时构造器的调用顺序
+
+    不可变对象
+    什么是不可变象（immutable object）
+    为什么 Java 中的 String 是不可变的（Immutable）
+    如何构建不可变的类结构？关键点在哪里
+    能创建一个包含可变对象的不可变对象吗
+    如何对一组对象进行排序
+
+91、方法
+    构造器（constructor）是否可被重写（override）
+    方法可以同时即是 static 又是 synchronized 的吗
+    abstract 的 method是否可同时是 static，是否可同时是 native，是否可同时是synchronized
+    Java支持哪种参数传递类型
+    一个对象被当作参数传递到一个方法，是值传递还是引用传递
+    当一个对象被当作参数传递到一个方法后，此方法可改变这个对象的属性，并可返回变化后的结果，那么这里到底是值传递还是引用传递
+    我们能否重载main()方法
+    如果main方法被声明为private会怎样
+
+92、异常
+    基本概念
+    Error 和 Exception有什么区别
+    UnsupportedOperationException是什么
+    NullPointerException 和 ArrayIndexOutOfBoundException 之间有什么相同之处
+    什么是受检查的异常，什么是运行时异常
+    运行时异常与一般异常有何异同
+    简述一个你最常见到的runtime exception(运行时异常)
+
+    finally
+    finally关键词在异常处理中如何使用
+    如果执行finally代码块之前方法返回了结果，或者JVM退出了，finally块中的代码还会执行吗
+    try里有return，finally还执行么？那么紧跟在这个try后的finally {}里的code会不会被执行，什么时候被执行，在return前还是后
+    在什么情况下，finally语句不会执行
+    throw 和 throws 有什么区别？
+    OOM你遇到过哪些情况？你是怎么搞定的？
+    SOF你遇到过哪些情况？
+    既然我们可以用RuntimeException来处理错误，那么你认为为什么Java中还存在检查型异常
+    当自己创建异常类的时候应该注意什么
+    导致空指针异常的原因
+    异常处理 handle or declare 原则应该如何理解
+    怎么利用 JUnit 来测试一个方法的异常
+    catch块里别不写代码有什么问题
+    你曾经自定义实现过异常吗？怎么写的
+    什么是 异常链
+    在try块中可以抛出异常吗
+
+93、JDBC
+    通过 JDBC 连接数据库有哪几种方式
+    阐述 JDBC 操作数据库的基本步骤
+    JDBC 中如何进行事务处理
+    什么是 JdbcTemplate
+    什么是 DAO 模块
+    使用 JDBC 操作数据库时，如何提升读取数据的性能？如何提升更新数据的性能
+    列出 5 个应该遵循的 JDBC 最佳实践
+    java调用jdbc连接数据库的具体步骤
+    preStatement和Statement的区别
+
+94、IO
+    File
+    File类型中定义了什么方法来创建一级目录
+    File类型中定义了什么方法来判断一个文件是否存在
+
+95、流
+    为了提高读写性能，可以采用什么流
+    Java中有几种类型的流
+    JDK 为每种类型的流提供了一些抽象类以供继承，分别是哪些类
+    对文本文件操作用什么I/O流
+    对各种基本数据类型和String类型的读写，采用什么流
+    能指定字符编码的 I/O 流类型是什么
+    1.java IO了解吗？
+    2.InputStream 和reader流的区别
+    3.给一个JDK编码的，以UTF-8编码输出的方法
+
+96、序列化
+    什么是序列化？如何实现 Java 序列化及注意事项
+    Serializable 与 Externalizable 的区别
+
+97、Socket
+    socket 选项 TCP NO DELAY 是指什么
+    Socket 工作在 TCP/IP 协议栈是哪一层
+    TCP、UDP 区别及 Java 实现方式
+
+98、说几点 IO 的最佳实践
+    直接缓冲区与非直接缓冲器有什么区别？
+    怎么读写 ByteBuffer？ByteBuffer 中的字节序是什么
+    当用System.in.read(buffer)从键盘输入一行n个字符后，存储在缓冲区buffer中的字节数是多少
+    如何使用扫描器类（Scanner Class）令牌化
+
+99、面向对象编程（OOP）
+    解释下多态性（polymorphism），封装性（encapsulation），内聚（cohesion）以及耦合（coupling）
+    多态的实现原理
+    封装、继承和多态是什么
+    对象封装的原则是什么?
+
+100、类
+    获得一个类的类对象有哪些方式
+    重载（Overload）和重写（Override）的区别。重载的方法能否根据返回类型进行区分？
+    说出几条 Java 中方法重载的最佳实践
+    抽象类
+    抽象类和接口的区别
+    抽象类中是否可以有静态的main方法
+    抽象类是否可实现(implements)接口
+    抽象类是否可继承具体类(concrete class)
+    匿名类（Anonymous Inner Class）
+    匿名内部类是否可以继承其它类？是否可以实现接口
+
+101、内部类
+    内部类分为几种
+    内部类可以引用它的包含类（外部类）的成员吗
+    请说一下 Java 中为什么要引入内部类？还有匿名内部类
+    继承
+    继承（Inheritance）与聚合（Aggregation）的区别在哪里
+    继承和组合之间有什么不同
+    为什么类只能单继承，接口可以多继承
+    存在两个类，B 继承 A，C 继承 B，能将 B 转换为 C 么？如 C = (C) B
+    如果类 a 继承类 b，实现接口c，而类 b 和接口 c 中定义了同名变量，请问会出现什么问题
+
+102、接口
+    接口是什么
+    接口是否可继承接口
+    为什么要使用接口而不是直接使用具体类？接口有什么优点
+
+103、泛型
+    泛型的存在是用来解决什么问题
+    泛型的常用特点
+    List能否转为List
+104、工具类
+    日历
+    Calendar Class的用途
+    如何在Java中获取日历类的实例
+    解释一些日历类中的重要方法
+    GregorianCalendar 类是什么
+    SimpleTimeZone 类是什么
+    Locale类是什么
+    如何格式化日期对象
+    如何添加小时(hour)到一个日期对象(Date Objects)
+    如何将字符串 YYYYMMDD 转换为日期
+    Math
+    Math.round()什么作用？Math.round(11.5) 等于多少？Math.round(-11.5)等于多少？
+
+105、XML
+    XML文档定义有几种形式？它们之间有何本质区别？解析XML文档有哪几种方式？DOM 和 SAX 解析器有什么不同？
+    Java解析XML的方式
+    用 jdom 解析 xml 文件时如何解决中文问题？如何解析
+    你在项目中用到了 XML 技术的哪些方面？如何实现
+
+106、动态代理
+    描述动态代理的几种实现方式，分别说出相应的优缺点
+
+107、设计模式
+    什么是设计模式（Design Patterns）？你用过哪种设计模式？用在什么场合
+    你知道哪些商业级设计模式？
+    哪些设计模式可以增加系统的可扩展性
+    单例模式
+    除了单例模式，你在生产环境中还用过什么设计模式？
+    写 Singleton 单例模式
+    单例模式的双检锁是什么
+    如何创建线程安全的 Singleton
+    什么是类的单例模式
+    写出三种单例模式实现
+    适配器模式
+    适配器模式是什么？什么时候使用
+    适配器模式和代理模式之前有什么不同
+    适配器模式和装饰器模式有什么区别
+    什么时候使用享元模式
+    什么时候使用组合模式
+    什么时候使用访问者模式
+    什么是模板方法模式
+    请给出1个符合开闭原则的设计模式的例子
+
+108、面向对象的特点
+109、java继承有哪几种？顶级类是什么？
+110、Object类都有什么方法？
+111、1 ==与equals的区别
+112、修改equals的时候为何要修改hashcode()
+113、如果让你设计一个类作为hashMap的key，你会注意什么 （就是设计hashcode时候会注意什么）
+114、equals相等hashcode一定相等吗？ hashcode相等，equals一定相等吗
+115、hashmap
+    1 刚才讲到了hashMap,那你就讲一下hashMap的具体实现。
+    2 你会如何做的线程安全的hashMap
+    3 了解过jdk1.8吗？ 对于hashMap底层进行修改过。（链改成了红黑树）
+    4 那么当数量达到多少时候，会改成红黑树？
+    5 底层中扩容的方法叫什么？
+    往一个hashMap中添加一个元素的具体步骤
+116、写单例模式， 需要lazy loading的
+    我写了2个，其中一个双重判断，然后面试问我：
+    2 很多人在写双重判断的时候会加入双重上锁，为什么呢？
+    回答后面试官又问我
+    3 知道jdk 1.5之后添加的一种实现单例模式的讨巧方法吗？
+    4 enum 如何实现单例模式？
+117、抽象类和接口的区别。 他们的应用场景
+118、设计一个Hash Table
+     你这个HASHTABLE会扩容吗？ 假设这个时候已经使用了1G内存，只剩下一点点内存，你如何扩容
+119、大数据解决问题：
+    给你大量 id->ip, ip属于一个国家，请你设计大数据解决方法，统计出 对应国家数大于3的Iid
+
+220、Java中的switch语句的参数？python中有无switch语句？
+
+221、Java的Object类中的方法及其作用？
+222、大数据排序？和取最大前N条？
+223、Java中类加载的过程?类加载器？
+224、动态加载类的框架了解哪些？
+225、动态代理一般有哪几种实现方式？动态代理的应用场景有哪些？
+226、如何实现不可变的类？
+227、浅复制和深复制？怎样实现深复制？
+228、HashMap、HashTable、ConcurrentHashMap的区别？
+229、CAS是一种什么样的同步机制？
+
+230、NIO的原理，包括哪几个组件？
+
+231、简单介绍一下java的反射机制？反射在哪些地方有应用场景？
+232、java中的引用有几种?
+    Java中的threadlocal是怎么用的? threadlocal中的内部实现是怎么样的? 哪种引用?
+    java中的"final"关键字在多线程的语义中，有什么含义
+    说说nio的架构，为什么变快了，说说select和buffer都是怎么用的？
+    在操作系统中的实现原理? 如果都是cpu轮训话，会不会对cpu影响太大?
+    ArrayList的实现原理，如何测试ArrayList动态分配内存中带来的内存、cpu变化
+    ArrayList是不是线程安全的? 怎么实现线程安全的?
+    volatile的作用，如果volatile修饰的对象经过了大量的写，会出现什么问题？
+    String的+和StringBuilder有什么区别? 放在循环中有什么问题？
+    日志打印的过程中，使用String的+操作和使用占位符输出，对性能上有什么区别
+    SimpleDateFormat如果是一个全局变量的话，有什么问题？
+    HashMap的操作中，直接使用keySet()遍历有什么问题？
+233、ArrayList和LinkedList区别？
+234、HashMap内部数据结构？
+235、ConcurrentHashMap分段锁？
+236、jdk1.8中，对hashMap和concurrentHashMap做了哪些优化
+237、如何解决hash冲突的，以及如果冲突了，怎么在hash表中找到目标值
+238、1、private修饰的方法可以通过反射访问，那么private的意义是什么
+2、Java类初始化顺序
+3、对方法区和永久区的理解以及它们之间的关系
+4、一个java文件有3个类，编译后有几个class文件
+5、局部变量使用前需要显式地赋值，否则编译通过不了，为什么这么设计
+6、ReadWriteLock读写之间互斥吗
+7、Semaphore拿到执行权的线程之间是否互斥
+8、写一个你认为最好的单例模式
+9、B树和B+树是解决什么样的问题的，怎样演化过来，之间区别
+10、写一个生产者消费者模式
+11、写一个死锁
+12、cpu 100%怎样定位
+13、String a = "ab"; String b = "a" + "b";  a == b 是否相等，为什么     
+14、int a = 1; 是原子性操作吗
+15、可以用for循环直接删除ArrayList的特定元素吗？可能会出现什么问题？怎样解决              
+16、新的任务提交到线程池，线程池是怎样处理
+17、AQS和CAS原理
+18、synchronized底层实现原理
+18、volatile作用，指令重排相关
+20、AOP和IOC原理
+21、Spring怎样解决循环依赖的问题
+22、dispatchServlet怎样分发任务的
+24、Object类的主要方法？
+22、30、描述一下Java异常层次结构。
+    Error：错误，是程序无法处理的错误。比如OutOfMemoryError。
+    Exception：异常，是程序本身可以处理的异常。NullPointerException、ArithmeticException、ArrayIndexOutOfBoundException
+    Error和Exception继承Throwable。
+    
+31、什么是检查异常，不受检查异常，运行时异常？并分别举例说明。
+    可查异常：编译器会检查它，当程序中出现这类异常，要么用try-catch捕获，要么用throws抛出，否则编译器不会通过，
+    不受检查异常：编译器不要求强制处置的异常，包括运行时异常（RuntimeException）和错误（Error）。
+    运行时异常：不受检查异常。
+
+32、finally块一定会执行吗？
+    一般情况下会执行。
+    1）System.exit(0); 在try或catch块中，则不会执行。在执行finally之前虚拟机被停止。
+    2）被设置为守护线程的内部代码的finally可能不会被执行。守护线程随着非守护线程的退出而退出，可能线程退出而还没执行到finally。
+
+33、正常情况下，当在try块或catch块中遇到return语句时，finally语句块在方法返回之前还是之后被执行？
+    finally中有return：先执行到try或catch中的return语句，然后跳转到finally中执行return，此时直接返回，不会再去执行try或catch中的return。
+    finally中没有return：先执行到try或catch中的return语句，然后在跳转到finally块执行语句，然后再跳转回try或catch块执行return。
+
+34、try、catch、finally语句块的执行顺序。
+    1）finally一定最后执行。
+    2）无异常：try执行，finally执行，finally之后的语句执行。
+    3）有异常：
+            catch能捕获：try中语句执行到异常时，跳转到catch中执行，最后执行finally中的语句，但是finally之后的语句不会被执行。
+            catch不能捕获：try中语句执行到异常时，此时catch无法捕获，则交给jvm处理，但是finally中的语句还是会被执行。
+33、40、Java中的参数传递时传值呢？还是传引用？
+33、对象引用类型分为哪几类？
+    强、软、弱、虚
+34、一个空Object对象的占多大空间？
+35、Java中有没有指针的概念？
+    java中没有指针，但java中有引用。
+    基本类型，值就直接保存在变量中。
+    引用类型，变量中保存的只是实际对象的地址，一般称为“引用”，引用指向实际对象，实际对象保存这内容。
+
+6、怎么理解无界队列和有界队列？
+    https://www.cnblogs.com/hujinshui/p/10342897.html
+    https://my.oschina.net/u/3999718/blog/3007143
+    有界队列：有固定大小的队列。
+    无界队列：没有设置固定大小的队列，可以直接入队列，知道溢出，但不会超过Integer.MAX_VALUE。
+8、什么是反射机制？
+    在运行时获取类的属性和方法，并动态调用类的方法。
+9、说说反射机制的作用。
+    不用写死代码，可以动态配置代码。
+10、反射机制会不会有性能问题？
+    会有性能问题，不过不用在意，spring中大量使用反射。
+11、List有哪些实现，如何实现的，如何使用它们？
+
+Map有哪些实现， 如何实现的？说说HashMap底层数据结构
+
+HashSet是如何实现的？HashMap,HashSet的区别？
+
+HashMap是如何get、put、扩容的？key重复了怎么办? 是如何解决的?
+
+如何Java的两个集合的交集、并集？
+
+如何保证List、Set或者Map中元素的有序性？
+
+List里的元素能不能重复？Set呢？List、Set中如果两次存放相同的对象或相同的key，会返回什么？是否发生异常？
+
+1. 说说环境变量JAVA_HOME的作用？
+    CLASSPATH: 类搜索路径. import java.util.*的时候, 编译器会去CLASSPATH路径下, 遍历子目录. 如果包在别处, 就要将路径添加到CLASSPATH中.
+    JAVA_HOME: 指向jdk的安装目录. 
+    PATH: 命令搜索路径.
+
+2. Overload和Override的区别。Overload的方法是否可以改变返回值的类型？
+    Overload: 重载. 
+        必须改变参数列表(参数个数或类型);
+        可以改变返回类型, 可以改变访问修饰符, 可以声明新的或更广的检查异常.
+    Override: 重写
+        参数列表已不能修改.
+        返回类型一定不能修改.
+        不能降低访问限制.
+        不能抛出新的或者更广的异常.
+
+3. 什么时候使用Object类中的clone()方法，clone() 和new 有什么区别。
+    java中clone()和new都能创建对象.
+    clone()不会调用构造方法; new会调用构造方法.
+    clone()能快速创建一个已有对象的副本,即创建对象并且将已有对象中所有属性值克隆;new只能在JVM中申请一个空的内存区域,对象的属性值要通过构造方法赋值.
+
+Java IO 主要的接口、实现？
+    AutoCloseable：JDK7新添加的接口，对带资源的try语句提供了支持，可以自动执行资源关闭过程。
+    Closeable：实现了Closeable接口的对象可以被关闭。JDK7开始Closeable拓展了AutoCloseable。在JDK7中，所有实现了Closeable接口的类也都实现了AutoCloseable接口。
+    Flushable：实现了Flushable接口的类的对象，可以强制将缓存的输出写入到与对象关联的流中。flush()。
+    Appendable：如果某个类的实例打算接收取自java.util.Formater的格式化输出，那么该类必须实现Appendable接口。
+    Readable：如果一个类继承了readable接口并实现了read方法，我们就可以使用scanner类来进行操作。
+
+什么是ByteArrayInputStream、ByteArrayOutputStream，如何使用？
+
+什么是DataInputStream、、DataOutputStream，如何使用？
+
+什么是ObjectInputStream、、ObjectOutputStream，如何使用？
+
+什么是标准输入、输出流， 缓冲流？如何重定向标准输入流？
+    标准输入流: InputStream is = System.in;
+    标准输出流: PrintStream ps = System.out;
+    缓冲流: 在读写数据时, 让数据在缓冲区能够减少系统实际对原属数据来源的存取次数, 因为一次能够做多个数据单位的操作.
+        BufferedInputStream、BufferedOutputStream类和BufferedReader、BufferedWriter.
+    重定向标准输入输出流:
+        三个重定向方法:  static void setErr（PrintStream err）、Static void setIn（InputStream in）、Static void setOut（PrintStream out）
+      ```
+      //初始化一个PrintStream对象
+      PrintStream ps = new PrintStream(new FileOutputStream("c:/myDoc/hello.txt"));
+      //重定向标准输出流，重定向到上面指定的文件
+      System.setOut(ps);
+      //使用PrintStream对象向流中写信息
+      System.out.print("测试一下，看重定向是否成功");
+      System.out.println(new ReOut());
+      //关闭流
+      ps.close();
+     ```
+
+什么是Serializable、Externalizable，如何使用？
+    一个类要想实现序列化，就必须实现Serializable接口进行自动序列化，或实现Externalizable进行手动序列化。
+
+字节流和字符流有什么区别，如何使用？
+    读写的时候，一个按字节读，一个按字符。
+    读写文件和内容无关的一般选择字节流。
+
+flush()方法的作用？什么时候需要执行flush？
+    flush() 刷新缓冲区，仅刷新，并不会关闭流对象。
+    close() 关闭流对象，在关闭之前会刷新该留。
+    一般写操作，如果要查看是否写入，就要flush()，否则数据可能还在缓冲区。
+
+什么是定时任务，如何使用TimerTask ？
+    Timer是jdk提供的一个定时器工具，使用的时候会在主线程之外起一个单独的线程执行指定的计划任务，可以指定执行一次或者反复执行多次。
+    TimerTask是一个实现了Runnable接口的抽象类，代表一个可以被Timer执行的任务。
+    使用：
+        1、new一个TimerTask的子类，重写run方法来指定具体的任务。
+        2、new一个Timer类，Timer的构造函数里会挂起一个单独的线程来执行计划任务。
+        3、调用schedule方法执行计划。
+        4、结束线程，timer.cancel();
+        ```
+        public class TestTimer {
+            public static void main(String args[]){
+                System.out.println("About to schedule task.");
+                new Reminder(3);
+                System.out.println("Task scheduled.");
+            }
+            public static class Reminder{
+                Timer timer;
+                public Reminder(int sec){
+                    timer = new Timer();
+                    timer.schedule(new TimerTask(){
+                        public void run(){
+                            System.out.println("Time's up!");
+                            timer.cancel();
+                        }
+                    }, sec*1000);
+                }
+            } 
+        }
+        ```
+如何写一个自定义的注解？注解的使用范围有哪些？
+    四种元注解：
+        @Documented 是否将注解信息添加在java文档中
+        @Retention  定义该注解的生命周期
+                    RententionPolicy.SOURCE  在编译阶段丢弃。@Override, @SuppressWarnings都属于这类注解。
+                    RententionPolicy.CLASS   在类加载的时候丢弃。
+                    RententionPolicy.RUNTIME 始终不会丢弃。运行期也保留该注解，因此可以使用反射机制读取该注解的信息。自定义的注解通常使用这种方式。
+        @Target     注解用在什么地方
+        @Inherited  是否允许子类继承该注解
+
+Java中的注解是如何工作的？
+    当注解标注到某个类或者方法或者成员变量或者某个输入参数上的时候，一定有一个对应的机制来对注解标注的类、方法、成员变量和参数进行某些处理。
+    对于@Override注解，它的用户就是JVM虚拟机，工作在字节码层面，在编译阶段进行检查，其处理机制主要是JVM内部处理。
+    Spring中的@Service注解，Spring在启动IOC容器的时候会对每个没进行扫描，把所有标注@Component及其子注解如@Service的类进行Bean处理。
+
+什么是枚举，是否可以继承？如何获取一个枚举类型里面的所有值？Java中的枚举是如何工作的？
+    如果一个类的实例是有限且确定的，那么可以使用枚举类。
+    ```
+    enum Season{
+　　    SPRING,SUMMER,FALL,WINTER;//默认public static final，这都是Season类的对象。
+    }
+    ```
+    枚举类的对象默认都是 public static final。
+    枚举类的构造器都是 private，所以无法在外部创建其实例，这也决定了枚举类实例的个数的确定性。
+    enum 类不可被继承。（final修饰）
+    enum 类无法继承其他类。（enum默认继承java.lang.Enum）
+    https://www.cnblogs.com/xiangguoguo/p/9061678.html
+    https://blog.csdn.net/weixin_37490221/article/details/86677274
+
+    获取全部枚举值：
+        YourEnumClass[] yourEnums = YourEnumClass.class.getEnumConstants();
+        或
+        YourEnumClass[] yourEnums = YourEnumClass.values();
+    
+    java中的枚举类是如何工作的：
+        枚举就是一个特殊的类，枚举类的对象都是该枚举类的实例。
+    
+Java 文件等资源，打开了不关闭，会出现什么后果？
+    资源必须写在finally块中保证关闭。因为finally块一定会执行。
+    优雅的关闭：jdk7中提供了try-with-resource语法，外部资源的句柄对象实现了AutoCloasable接口即可。
+               将外部资源的句柄对象的创建放在try关键字后面的括号中，当这个try-with-catch代码块执行完毕后，Java会确保外部资源的close方法被调用。
+    https://gitbook.cn/books/5bff7d9934b2d414a8f76338/index.html
+
+什么时候用assert？
+    测试的时候，默认jvm没开启断言，assert isOpen = true;
+
+int和Integer有什么别？
+    基本数据类型与包装类：
+    byte --> Byte
+    short --> Short
+    int --> Integer
+    long --> Long
+    float --> Float
+    double --> Double
+    char --> Character
+    boolean --> Boolean
+
+为什么要有包装类？
+    java是面向对象的编程语言，基本类型并不具有对象的性质，为了让基本类型也具有对象的特征，就出现了包装类，将基本类型包装起来，使它具有了对象的性质，并且为其添加了属性和方法。
+    当需要往ArrayList、HashMap中放东西时，基本数据类型是放不进去的，因为容器都是装objet的，这就需要这些基本的包装类了。
+    包装类型将对象存在堆中，然后通过引用使用；基本数据类型直接将变量值存储在栈中。
+
+什么是自动装箱、自动拆箱？
+    将基本数据类型转换为包装类对象，这个过程叫做装箱；反之是拆箱。
+    装箱和拆箱是在编译成class文件时自动加上的，因此又叫做自动装箱\拆箱。
+    自动用valueOf()做装箱（Long.valueOf(100L)、Boolean.valueOf(true)）；自动用intValue、longValue、booleanValue做拆箱。
+
+什么是Thread join、yeild？ 区别？
+    join：
+        t.join(timeout)方法会则是调用此方法的线程进入TIME_WAITING状态，知道线程t完成，此线程再继续。
+        底层实现是通过wait(time)，到时间会自动唤醒。
+    yeild：
+        当一个线程调用yeild之后，会让出当前使用的CPU，让自己从运行态转为就绪态。
+
+栈、队列的区别？双向队列？
+    栈：
+        先进后出，只有一头可进。
+        Stack<String> staffs = new Stack<String>();
+        staffs.push("a");//
+        staffs.pop();// 出栈
+        staffs.peek();// 取栈顶元素，并不会弹出
+        staffs.search(obj);// 判断元素是否在栈中
+        底层：动态增长的数组，方法使用synchronized修饰，线程安全。
+
+    队列：先进先出，一头进另一头出。
+
+    双向队列：可以在头尾插入和删除元素。
+
+如何捕获正则表达式中的分组？
+
+在 Queue 中 poll()和 remove()有什么区别？
+    offer()和add()的区别：都是向队列中添加元素，如果满，add会抛出一个unchecked异常，offer则会返回false.
+    peek()和element()的区别：都将在不移除的情况下返回队头，peek()在队列为空的时候返回null，element抛出异常。
+    poll()和remove()的区别：都将移除并且返回队头，poll()在队列为空时返回null，而remove()会抛出异常。
+    https://www.cnblogs.com/yuandluck/p/9476123.html
+
+222、说说Xml、json的优缺点，分别有哪些现有的开源框架?
