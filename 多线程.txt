@@ -295,22 +295,31 @@
     如何确保 main() 方法所在的线程是 Java 程序最后结束的线程
     非常多个线程（可能是不同机器），相互之间需要等待协调才能完成某种工作，问怎么设计这种协调方案
     你需要实现一个高效的缓存，它允许多个用户读，但只允许一个用户写，以此来保持它的完整性，你会怎样去实现它
+
 39、实现两个线程，一个线程只输出A，另外一个线程只输出B， 让他们交替输出AB
-40、1、多线程有什么用？
 
-一个可能在很多人看来很扯淡的一个问题：我会用多线程就好了，还管它有什么用？在我看来，这个回答更扯淡。所谓"知其然知其所以然"，"会用"只是"知其然"，"为什么用"才是"知其所以然"，只有达到"知其然知其所以然"的程度才可以说是把一个知识点运用自如。OK，下面说说我对这个问题的看法：
+40、多线程有什么用？
+    一个可能在很多人看来很扯淡的一个问题：我会用多线程就好了，还管它有什么用？
+    在我看来，这个回答更扯淡。所谓"知其然知其所以然"，"会用"只是"知其然"，"为什么用"才是"知其所以然"，
+    只有达到"知其然知其所以然"的程度才可以说是把一个知识点运用自如。OK，下面说说我对这个问题的看法：
 
-1）发挥多核CPU的优势
+    1）发挥多核CPU的优势
+        随着工业的进步，现在的笔记本、台式机乃至商用的应用服务器至少也都是双核的，4核、8核甚至16核的也都不少见，
+        如果是单线程的程序，那么在双核CPU上就浪费了50%，在4核CPU上就浪费了75%。
+        单核CPU上所谓的"多线程"那是假的多线程，同一时间处理器只会处理一段逻辑，只不过线程之间切换得比较快，看着像多个线程"同时"运行罢了。
+        多核CPU上的多线程才是真正的多线程，它能让你的多段逻辑同时工作，多线程，可以真正发挥出多核CPU的优势来，达到充分利用CPU的目的。
 
-随着工业的进步，现在的笔记本、台式机乃至商用的应用服务器至少也都是双核的，4核、8核甚至16核的也都不少见，如果是单线程的程序，那么在双核CPU上就浪费了50%，在4核CPU上就浪费了75%。单核CPU上所谓的"多线程"那是假的多线程，同一时间处理器只会处理一段逻辑，只不过线程之间切换得比较快，看着像多个线程"同时"运行罢了。多核CPU上的多线程才是真正的多线程，它能让你的多段逻辑同时工作，多线程，可以真正发挥出多核CPU的优势来，达到充分利用CPU的目的。
+    2）防止阻塞
+        从程序运行效率的角度来看，单核CPU不但不会发挥出多线程的优势，反而会因为在单核CPU上运行多线程导致线程上下文的切换，
+        而降低程序整体的效率。但是单核CPU我们还是要应用多线程，就是为了防止阻塞。
+        试想，如果单核CPU使用单线程，那么只要这个线程阻塞了，比方说远程读取某个数据吧，对端迟迟未返回又没有设置超时时间，
+        那么你的整个程序在数据返回回来之前就停止运行了。
+        多线程可以防止这个问题，多条线程同时运行，哪怕一条线程的代码执行读取数据阻塞，也不会影响其它任务的执行。
 
-2）防止阻塞
-
-从程序运行效率的角度来看，单核CPU不但不会发挥出多线程的优势，反而会因为在单核CPU上运行多线程导致线程上下文的切换，而降低程序整体的效率。但是单核CPU我们还是要应用多线程，就是为了防止阻塞。试想，如果单核CPU使用单线程，那么只要这个线程阻塞了，比方说远程读取某个数据吧，对端迟迟未返回又没有设置超时时间，那么你的整个程序在数据返回回来之前就停止运行了。多线程可以防止这个问题，多条线程同时运行，哪怕一条线程的代码执行读取数据阻塞，也不会影响其它任务的执行。
-
-3）便于建模
-
-这是另外一个没有这么明显的优点了。假设有一个大的任务A，单线程编程，那么就要考虑很多，建立整个程序模型比较麻烦。但是如果把这个大的任务A分解成几个小任务，任务B、任务C、任务D，分别建立程序模型，并通过多线程分别运行这几个任务，那就简单很多了。
+    3）便于建模
+        这是另外一个没有这么明显的优点了。假设有一个大的任务A，单线程编程，那么就要考虑很多，建立整个程序模型比较麻烦。
+        但是如果把这个大的任务A分解成几个小任务，任务B、任务C、任务D，分别建立程序模型，并通过多线程分别运行这几个任务，
+        那就简单很多了。
 
 
 
@@ -1017,15 +1026,92 @@ Java线程的状态有哪些，它们是何时、如何（通过什么方法）�
 什么是Vector、HashTable？
 
 什么是CopyOnWriteArrayList，如何使用它？
+    读写分离，写时复制出一个新的数组，完成插入、修改或者移除操作后将新数组赋值给array
 
 如何创建或保证一个Map、List的线程安全？
+    HashMap不是线程安全的。
+    HashTable线程安全，加了synchronized关键字。
+    ArrayList线程不安全。
+    Collections.synchronizedList与CopyOnWriteArrayList是线程安全的。
+
+多线程同步锁
+    A，RentrantLock，可重入的互斥锁，可中断可限时，公平锁，必须在finally释放锁，而synchronize由JVM释放。可重入但是要重复退出，普通的lock()不能响应中断，lock.lockInterruptbly()可响应中断，可以限时tryLock()，超时返回false，不会永久等待构成死锁。
+    B，Confition条件变量，signal唤醒其中1个在等待的线程，signalall唤醒所有在等待的线程await()等待并释放锁，与lock结合使用。
+    C，semaphore信号量，多个线程比（额度=10）进入临界区，其他则阻塞在临界区外。
+    D，ReadWriteLock，读读不互斥，读写互斥，写写互斥。
+    E，CountDownLantch倒数计时器，countdown()和await()
+    F，CyCliBarrier
+    G，LockSupport，方法park和unpark
 
 Java 锁中，synchronized RentrantLock 分别在什么场景下使用，如何使用？
-
+    synchronized缺点：
+        不能中断，没有超时机制。
+    ReentrantLock优点：
+        可一直等待获取锁；lock()
+        可尝试一次获取锁；tryLock()
+        可获取锁超时；tryLock(timeout)
+        可中断获取锁；lockInterruptibly()和intrrupt()结合
 RentrantLock 提供主要哪些方法？
+    一个可重用的互斥锁，有synchronized的功能，但更强大。
+    * ReentrantLock(boolean fair)
+         创建公平/非公平策略的ReentrantLock。
+    * lock() 
+        获取锁。如果锁已被其他线程获取，则进行等待。
+    * tryLock()
+        尝试一次获取锁
+    * tryLock(long timeout, TimeUnit unit)
+        尝试获取锁的时间为timeout
+    * unlock()
+        释放锁
+    * newCondition()
+        Lock lock = new ReentrantLock();
+        Condition condition = lock.newCondition();
+        condition.await();
+        condition.singal();  
+    * lockInterruptibly()
+        使用lockInterruptibly()获取锁的时，如果未获取到锁可以使用interrupt()中断。
 
 如何唤醒一个阻塞的线程？
-
+    1）suspend和resume
+        suspend暂停线程的同时，并不会去释放任何锁资源，其他线程访问不到它占用的锁，直到对应的线程执行resume()方法后，
+        被挂起的线程才能继续，从而其他被阻塞在这个锁的线程才可以继续执行。
+        但是，如果resume()操作在suspend()之前执行，那么线程将一直处于挂起状态，同时一直占用锁，这就产生了死锁。
+    2）wait和notify
+        wait与notify必须配合synchronized使用，因为调用之前必须持有锁，wait会立即释放锁，notify则是同步块执行完了才释放
+    3）awit和singal
+        Condition类提供，而Condition对象由new ReentLock().newCondition()获得，与wait和notify相同，因为使用Lock锁后无法使用wait方法
+        Lock实现主要是基于AQS，而AQS实现则是基于LockSupport，所以说LockSupport更底层，所以使用park效率会高一些
+    4）park和unpark
+        ```
+        public class SuspendResumeTest {
+            public static Object object = new Object();
+            static TestThread t1 = new TestThread("线程1");
+            static TestThread t2 = new TestThread("线程2");
+            public static class TestThread extends Thread{
+                public TestThread(String name) {
+                    super.setName(name);
+                }
+                @Override
+                public void run() {
+                    synchronized (object) {
+                        System.out.println(getName()+" 占用。。");
+                        Thread.currentThread().suspend();
+        //                LockSupport.park();
+                    }
+                }
+            }
+            public static void main(String[] args) throws InterruptedException {
+                t1.start();
+                Thread.sleep(200);
+                t2.start();
+                t1.resume();
+        //        LockSupport.unpark(t1);
+        //        LockSupport.unpark(t2);
+                t2.resume();
+                t1.join();
+                t2.join();
+            }
+        ```
 
 什么是死锁、活锁，无锁？
     死锁：多个线程互相等待对方释放资源。
