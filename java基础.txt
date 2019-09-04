@@ -180,97 +180,400 @@
     
     或者写到流中序列化的方式来实现，不必考虑引用类型中还包含引用类型，直接用序列化来实现对象的深复制拷贝，即将对象写到流，再从流中读出来，需要实现seriazation接口。
 
-25、在自己的代码中，如果创建一个java.lang.String类，这个类是否可以被类加载器加载？为什么。
+25、什么是类加载？
+    负责读取java字节代码，并转换成java.lang.Class类的一个实例。通过此实例的 newInstance()方法就可以创建出该类的一个对象。
+    基本上所有的类加载器都是 java.lang.ClassLoader类的一个实例。
+
+26、java.lang.Class类
+    java.lang.Class类，它的对象用来描述一个运行状态的类或接口。一个xxx.java文件编译后生成一个xxx.class文件，一个xxx.class文件被JVM加载后生成该类对应的Class对象，该对象包含了该类的所有信息，
+    比如：类中有字段、构造器、方法等信息。一个类有一个对应的Class对象，元素类型相同且长度相同的数组共享一个Class对象，java基本类型包括void都有各自的Class对象。
+
+27、什么是类加载器？
+    jdk提供了三种类加载器：
+        Bootstrp Classloader(启动类加载器): c++编写，在jvm启动后初始化，主要负责%JAVA_HOME%/jre/lib，%JAVA_HOME%/jre/classes，-Xbootclasspath参数执行的路径中的类。
+        ExtClassLoader(拓展类加载器，java 9改为Platform Loader): Bootstrp loader加载ExtClassLoader，并且将ExtClassLoader的父加载器设置为Bootstrp loader。
+                        ExtClassLoader是java编写（sun.misc.Launcher$ExtClassLoader）
+                        加载%JAVA_HOME%/jre/lib/ext路径下以及 java.ext.dirs系统变量指定的路径中类库。
+        AppClassLoader(应用程序类加载器): 加载完ExtClassLoader后，就会加载AppClassLoader，并且将AppClassLoader的父加载器指定为ExtClassLoader。
+                        java编写。实现类是sun.misc.Launcher$AppClassLoader.
+                        ClassLoader中有个getSystemClassLoader方法，此方法返回的正是AppclassLoader。
+                        AppClassLoader主要负责加载classpath所指定的位置的类或者jar文档，是java默认的类加载器。
+    自定义类加载器
+        通过继承ClassLoader类实现，主要重写findClass方法。
+    类全名和类加载器一致的类才是相同的类，被不同的类加载器加载之后得到的类也是不同的。
+
+28、JDK目录
+    /bin: jdk的各种工具命令。javac、java、jconsole等。
+    /db
+    /include：支持本地方法的C头文件。
+    /jre
+        /lib:
+        /classes
+    /lib
+
+29、双亲委派是什么？
+    子加载器接收到了类加载请求，但子加载器首先不会去尝试加载类而是委托给父加载器去加载。父加载器重复这一操作，直到顶层加载器，父加载器无法加载会交给子加载器。
+
+30、为什么要双亲委派？
+    1) 可以避免重复加载，当父加载器已经加载了该类的时候，子加载器就没必要再加载一次。
+    2) 为了安全，java核心的类不会被随意替换，假设通过网络传递一个名为java.lang.String的类，通过双亲委派传递到启动类加载器，启动类发现已经加载过就不会重复加载，而直接返回已加载过String.class。
+
+31、可以不可以自己写个String类
+    不可以，自定义的String类不能替换掉JDK本身的String类。
+    就算自己写一个classLoader加载器类来加载自己写的java.lang.String类，但是不会加载成功，因为java.*开头的类，jvm的实现中保证了必须由启动类加载器来加载。
+
+32、为什么要破坏双亲委派？
+    某些情况下父加载器需要委托子加载器去加载class文件。受到加载范围的限制，父加载器无法加载到需要的文件。
+    以Driver接口为例，由于Driver接口定义在jdk中，而其实现由各个数据库的服务商来提供，比如mysql就写了MySQL Connector，DriverManager（jdk提供）要加载各个实现了Driver接口的实现类，
+    然后进行管理，但是DriverManager由启动类加载器加载，只能加载JAVA_HOME的lib文件，这个时候父加载器只能委托子加载器来加载Driver实现。这就破坏了双亲委派。
+
+33、如何破坏双亲委派？
+    1、双亲委派模型出现之前，即JDK 1.2发布之前。
+    2、JDBC中Driver类需要动态去加载不同数据库类型的Driver类，用户的Driver类不能由启动类加载器去加载，应该由应用程序加载类去进行类加载。
+      引入了线程上下文类加载器，可以把原本需要由启动类加载器进行加载的类由应用程序类加载器进行加载。
+      获取系统类加载器：Thread.currentThread().getContextClassLoader()
+
+34、Thread.getContextClassLoader和ClassLoader.getClassLoader的区别
+    getClassLoader()返回该类的类加载器，如果是bootstrp加载器加载的类返回Null。
+    getContextClassLoader()返回线程上下文加载器（TCCL）。线程创建者在创建线程之后会用对应的setContextClassLoader()方法将合适的类加载器设置到线程中。
+    如果不设置默认是系统类加载器就是AppClassLoader。
+    有些框架为了做类的隔离会通过不同的ClassLoader来做类的隔离，假设框架提供了一个可拓展的服务接口，这个接口的类加载器是AppClassLoader，但是这个接口的实现
+    则交给使用者来拓展，那么实现类很有可能被自定义的ClassLoader加载导致AppClassLoader无法找到实现类。如果在框架的层面希望能够获取到接口实现类就需要将实现类
+    用getContextClassLoader获得的ClassLoader来加载。
+
+9、修改类加载策略要复写哪个方法？
+    loadClass()：先查看Class是否已经加载，如果没有，则递归到父加载器，如果父加载器还没找到，则调用findClass()
+    findClass()：根据名称或位置加载.class字节码，然后使用desineClass
+    defineClass()：将字节码转换为Class实例。
+
+10、知道模块化吗？
+
+11、知道Java9的模块化技术吗？
+
+12、jigsaw，jboss modules和osgi的区别？
+
+13、ClassNotFoundException和NoClassDefFoundErr区别？
+    ClassNotFoundException：是一个异常，Class.forName、 ClassLoader.loadClass、 ClassLoader.findSystemClass在动态加载类到内存中的时候可能会抛出这个异常。
+                            在类路径中找不到类。
+    NoClassDefFoundErr：要查找的类在编译的时候是存在的，运行的时候却找不到了。
+    加载时从外存储器找不到需要的class就出现ClassNotFoundException 
+    连接时从内存找不到需要的class就出现NoClassDefFoundError
+
+14、包冲突、类冲突、模块化
+    包冲突：
+        A->B->C->D_1
+        E->F->D_2
+        依赖不同的版本D，但maven只会加载一个D。
+        maven加载jar的时候，按最短路径、最先声明优先。
+        移除冲突包：
+            1）可使用Maven Helper插件中的Dependency Analyzer分析冲突的jar包，然后移除。
+            2）使用<exclusions>标签排除冲突的jar包，maven helper等同于该方法。
+        分析包冲突：
+            mvn dependency:tree
+
+15、SPI
+    SPI（Service Provider Interface）是JDK内置的一种提供服务发现的机制。
+    java中子类获取父类或接口信息非常方便，但是根据一个接口获取该接口的所有实现类却并不那么容易。
+    一个方法是可以扫描classpath下所有的class与jar包中的class，接着用ClassLoader加载进来，再判断是否是给定接口的子类。但是代价太大。
+    java推出了ServiceLoader类来提供服务发现机制，动态的为某个接口寻找服务实现，当服务的提供者提供了服务接口的一种实现之后，必须根据SPI约定在META-INF/services/目录
+    创建一个以服务接口命名的文件，该文件里写的就是实现该服务接口的具体实现类。当程序调用ServiceLoader的load方法的时候，ServiceLoader能够通过约定的目录找到指定的文件，
+    并装载实例化，完成服务的发现。
+    public class SPITest {
+        public static void main(String[] args) {
+            ServiceLoader<Animal> load = ServiceLoader.load(Animal.class);
+            Iterator<Animal> iterator = load.iterator();
+            while(iterator.hasNext()){
+                Animal animal = iterator.next();
+                animal.eat();
+            }
+        }
+    }   
+    ServiceLoader首先找到接口文件，然后解析出文件中的所有服务实现类并加载实例化。
+    JDBC使用了SPI机制，让所有的任务都交给不同的数据库厂商各自去完成，无论是实现Driver接口，还是SPI要求的接口文件，都做到了让用户不需要关心一点细节。
     
-26、说一说你对java.lang.Object对象中hashCode和equals方法的理解。在什么场景下需
-27、要重新实现这两个方法。
-28、在jdk1.5中，引入了泛型，泛型的存在是用来解决什么问题。
-29、这样的a.hashcode() 有什么用，与a.equals(b)有什么关系。
-30、有没有可能2个不相等的对象有相同的hashcode。
+26、说一说你对java.lang.Object对象中hashCode和equals方法的理解。在什么场景下需要重新实现这两个方法。
+    为什么需要hashCode?
+    1、在map等集合中，通过hashCode可以很快的找到元素的位置
+    2、比较两个对象是否相等时，先通过hashCode比较，这样速度比较快，如果不相等直接返回false
+
+    为什么要重载equal方法？
+    Object对象默认比较的是两个对象的内存地址是否一样，正常大家应该比较的是对象里面的值是否一样。
+
+    为什么重载hashCode方法？
+    如果我们只重写equals，而不重写hashCode方法，就会出现两个对象一样，但是hashCode不相等情况，在map等集合中应用时，就会出现问题，因为hashCode不一样，两个一样的对象会放到集合中。
+
+27、向上转型、向下转型
+    向上转型：B extends A;  A a = new B()就是向上转型，即父类的引用指向子类的对象。此时a不能调用子类自己新建的方法和变量，但是如果子类重写了父类的方法，则会调用子类的方法。
+    向下转型：B extends A;  A a = new B(); B b = (B)a;就是向下转型。向下转型后b对象又可以调用子类自己的方法了。
+    不安全的向下转型：
+        A a = new A(); 
+        B b = (B)a;
+        a是父类对象，子类的实例b肯定不能指向父类a。
+    向下转型存在风险，所以最好先用if(a instanceof B)判断一下。
+    instanceof ：
+        在运行时指出对象是否是特定类的一个实例。object instanceof class
+        在编译状态中，class可以是object对象的父类，自身类，子类。在这三种情况下Java编译时不会报错。
+        在运行转态中，class可以是object对象的父类，自身类，不能是子类。在前两种情况下result的结果为true，最后一种为false。但是class为子类时编译不会报错。运行结果为false。
+28、泛型
+    在jdk1.5中，引入了泛型，泛型的存在是用来解决什么问题。
+        早期Java是使用Object来代表任意类型的，但是向下转型有强转的问题。
+
+    什么是泛型，如何使用（使用在哪些地方）？Java中的泛型是如何工作的？
+
+    什么是泛型通配符？ 在什么情况下使用？
+
+29、如何获取泛型对应的实际类型？
+    通过反射，先拿到参数，然后取参数类型
+30、泛型是如何实现的？ List、List<T>、List<?>、List<Object> 的区别？
+        编译的时候擦除了。
+        List: 接受任何类型。
+            ArrayList arrayList = new ArrayList();
+            arrayList.add(123);
+            arrayList.add("sss");
+        List<T>：
+        List<?>：是一个泛型，在没有赋值前，表示可以接受任何类型的集合赋值，但赋值之后不能往里面随便添加元素
+        List<Object>
+
 31、Java中的HashSet内部是如何工作的。
+    无序集合。
+    HashSet是基于HashMap实现的，底层采用HashMap来保存元素。
+    将相应的内容存储在一个hashmap的key中，然后再去读取。
+    为了保证hashset的唯一性，hashmap里的value保存同一个对象：
+    private static final Object PRESENT = new Object();
+
+    HashSet按Hash算法来存储集合中的元素，因此具有很好的存取和查找性能。
+
+32、TreeSet的原理？
+    有序集合。
+    基于TreeMap实现的。
+    支持两种排序方式：自然排序或者创建TreeSet时提供的Comparator进行排序。
+
+32、HashMap,HashSet的区别？
+
 32、什么是序列化，怎么序列化，为什么序列化，反序列化会遇到什么问题，如何解决。
+    https://www.cnblogs.com/kubixuesheng/p/10350523.html
+    为了网络传输或本地保存，可直接反序列化还原对象。
+    
+    序列化和反序列化即对象和字节序列间的转化，进程间传送文本图片音频等以二进制传送。
+    JDK中ObjectOuputStream和ObjectInputStream为输出输入流，只有实现SeriaLizable/Externalizable接口的类才能被序列化。
+    1、序列化一个对象首先要创造某些OutputStream对象(如FileOutputStream、ByteArrayOutputStream等)，然后将其封装在一个ObjectOutputStream对象中，在调用writeObject()方法即可序列化一个对象
+    2、String类型的对象、枚举类型的对象、数组对象，都是默认可以被序列化的。
+    3、如果仅仅让某个类实现Serializable接口，而没有其它任何处理的话，则就是使用默认序列化机制。
+        使用默认机制在序列化对象时，不仅会序列化当前对象，还会对该对象引用的其它对象也进行序列化，同样地，这些其它对象引用的另外对象也将被序列化，以此类推。
+        所以，如果一个对象包含的成员变量是容器类对象，而这些容器所含有的元素也是容器类对象，那么这个序列化的过程就会较复杂，开销也较大。
+    4、当类的某个字段被 transient 修饰，默认序列化机制就会忽略该字段。
+    5、如果一个类想被序列化，需要实现 Serializable 接口进行自动序列化，或者实现 Externalizable 接口进行手动序列化，否则强行序列化该类的对象，就会抛出 NotSerializableException 异常，这是因为，在序列化操作过程中会对类型进行检查，要求被序列化的类必须属于 Enum、Array 和 Serializable 类型其中的任何一种（Externalizable也继承了Serializable）。
+    6、序列化并不保存静态变量，要想将父类对象也序列化，就需要让父类也实现Serializable接口。如果一个类的字段有引用对象，那么该引用类型也要实现Serializable接口。
+    7、如果父类没有实现Serializable接口，但其子类实现了此接口，那么这个子类是可以序列化的，但是在反序列化的过程中会调用父类的无参构造函数，所以在其直接父类（注意是直接父类）中必须有一个无参的构造函数。
+    
+    反序列化的过程需要创造InputStream对象(如FileInputstream、ByteArrayInputStream等)，然后将其封装在ObjectInputStream中，在调用readObject()即可
+    注意对象的序列化是基于字节的，不能使用基于字符的流。
+
 33、java7、java8的新特性。
-34、常用的异常类型?
-35、反射中，Class.forName和classloader的区别
+    java 7 :
+        在switch中使用字符串；自动关闭资源（必须实现AutoCloseable接口）。
+    java8 引入了语言特性lambda表达式；Optional 类；Stream API。
+        lambda: 三部分（参数、箭头、方法体可以返回值也可以不返回任何东西）
+            1. (params) -> expression
+            2. (params) -> statement
+            3. (params) -> { statements }
+            ()->10; // 直接返回10
+            (int x, int y) -> x+y; // 接受两个int类型的参数，并返回这两个参数相加的和
+            (x, y) -> x + y; //接受两个参数，该参数的类型由JVM根据上下文推断出来，并返回两个参数的和
+            (String name) -> System.out.println(name); //
+            name -> System.out.println(name); //
+            (String name, String sex) -> {System.out.println(name); System.out.println(sex); }
+            x -> 2*x; 
+        Stream：流Stream。可以和lambda结合。
+            生成流：
+                串行流：stream()
+                并行流：parallelStream()
+            获取经字符串的数量：
+                List<String> strings = Arrays.asList("abc", "", "bc", "efg", "abcd","", "jkl");
+                // 获取空字符串的数量
+                int count = strings.parallelStream().filter(string -> string.isEmpty()).count();
+        Optional类：
+            Optional类主要解决的问题是臭名昭著的空指针异常。链式调用的时候可能会有某个环节出现空指针。
+            String isocode = user.getAddress().getCountry().getIsocode().toUpperCase();
+    
+    java9 引入了module。
+
+    java10 可以用var声明局部变量。
+
 36、session和cookie的区别和联系，session的生命周期，多个服务部署时session管理。
+    1）spring boot设置session超时：server.servlet.session.timeout=3660s
+    2）web.xml文件中设置超时：
+        ```
+        <session-config>
+            <session-timeout>20</session-timeout>
+        </session-config>
+        ```
+    3）Spring Session支持的仓库有Redis、MongoDB、JDBC
+        ```
+        依赖：
+        <dependency>
+            <groupId>org.springframework.session</groupId>
+            <artifactId>spring-session-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+        
+        注解：
+        @Configuration
+        // 设置session的失效时间
+        @EnableRedisHttpSession(maxInactiveIntervalInSeconds = 120) 
+        public class RedisHttpSessionConfiguration {
+        }
+        ```
+        ```
+        设置session
+        @RequestMapping("/")
+        public String Index(@RequestParam("name") String name, HttpServletRequest request, HttpSession session){
+
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null && cookies.length > 0) {
+                for (Cookie cookie : cookies) {
+                    if (cookie.getName().contains("JSESSION")) {
+                        System.out.println(cookie.getName() + "=" + cookie.getValue());
+                    }
+                }
+            }
+            Object value = session.getAttribute("username");
+            if (value == null) {
+                System.out.println("用户不存在");
+                session.setAttribute("username", "{username: '" + name+ "', age: 28}");
+            } else {
+                System.out.println("用户存在");
+            }
+
+            return "username=" + value;
+        }
+        ```
 37、Java中的队列都有哪些，有什么区别。
-38、Java数组和链表两种结构的操作效率，在哪些情况下(从开头开始，从结尾开始，从中间开始)，哪些操作(插入，查找，删除)的效率高
+    1）不阻塞队列：
+        PriorityQueue：类实质上维护了一个有序列表。加入到 Queue 中的元素根据它们的天然排序（通过其 java.util.Comparable 实现）或者根据传递给构造函数的 java.util.Comparator 实现来定位。
+        ConcurrentLinkedQueue：
+    2）实现了阻塞接口：
+        * ArrayBlockingQueue ：一个由数组支持的有界队列。
+        * LinkedBlockingQueue ：一个由链接节点支持的可选有界队列。
+        * PriorityBlockingQueue ：一个由优先级堆支持的无界优先级队列。
+        * DelayQueue ：一个由优先级堆支持的、基于时间的调度队列。
+        * SynchronousQueue ：一个利用 BlockingQueue 接口的简单聚集（rendezvous）机制。
+
 39、HashMap的源码，实现原理，底层结构。
-40、动态代理的几种方式
-41、HashMap的并发问题
+    HashMap底层有数组加链表组成，链表长度大于8时转为红黑树。
+    底层是数组，数组的每一项又是一个链表。
+    put操作：
+        1）对key的hashcode()做hash，然后计算index。
+        2）如果没有碰撞就放到bukcet里。
+        3）如果碰撞了，以链表的形式存在bockets后。
+        4）(e.hash == hash && ((k = e.key) == key || (key != null && key.equals(k)))
+    get操作：
+        1）bucket（桶/数组元素和下面的链表）里的第一个节点，直接命中；
+        2）如果有冲突，则通过key.equals(k)去查找对应的entry。
+    https://www.jianshu.com/p/316284bf1217
+
 42、了解LinkedHashMap的应用吗
+
 43、cloneable接口实现原理？
     Cloneable接口没有任何方法。
     实现Cloneable接口表示该类可以被克隆。
     表示接口支持克隆。
-    clone()是被内地方法实现。
+    clone()是被本地方法实现。
 
 44、Java NIO使用
-45、hashtable和hashmap的区别及实现原理，hashmap会问到数组索引，hash碰撞怎么解决
-46、arraylist和linkedlist区别及实现原理
-47、反射中，Class.forName和ClassLoader区别
-48、String，Stringbuffer，StringBuilder的区别？
-49、有没有可能2个不相等的对象有相同的hashcode
-50、TreeMap的实现原理
-51、什么是基于注解的切面实现
-52、什么是 对象/关系 映射集成模块
-53、什么是 Java 的反射机制
-54、Cookie 和 Session的区别
-55、fail-fast 与 fail-safe 机制有什么区别
-56、get 和 post请求的区别
-57、Interface 与 abstract 类的区别
-58、IO 和 NIO的区别，NIO优点
-59、JRE、JDK、JVM 及 JIT 之间有什么不同
-60、一个”.java”源文件中是否可以包含多个类（不是内部类）？有什么限制
-61、简单说说你了解的类加载器。是否实现过类加载器
-62、什么是finalize()方法？
-63、finalize()方法什么时候被调用
-64、析构函数(finalization)的目的是什么
-65、final 和 finalize 的区别
-66、final关键字有哪些用法
-    final 与 static 关键字可以用于哪里？它们的作用是什么
-    final, finally, finalize的区别
-    final、finalize 和 finally 的不同之处？
-    能否在运行时向 static final 类型的赋值
-    使用final关键字修饰一个变量时，是引用不能变，还是引用的对象不能变
-    一个类被声明为final类型，表示了什么意思
 
-67、throws, throw, try, catch, finally分别代表什么意义
-68、Java 有几种修饰符？分别用来修饰什么
-69、super什么时候使用
+45、hashtable和hashmap的区别及实现原理，hashmap会问到数组索引，hash碰撞怎么解决
+
+46、arraylist和linkedlist区别及实现原理
+
+50、TreeMap的实现原理
+    红黑树
+
+52、什么是 对象/关系 映射集成模块
+    ORM
+    对象和数据库的映射，可以不必关心数据库怎么存储，操作数据库像操作对象一样。
+
+55、fail-fast 与 fail-safe 机制有什么区别
+    fail-fast（快速失败）：
+        在用迭代器迭代一个集合时，如果遍历过程中对集合内容做了修改，则会抛出异常。
+        对集合做了修改则会改变modCount变量，使用hashNext/next()遍历下一个元素之前，都会检测modCount变量是否改变。
+        如果集合发生变化时修改modCount值刚好又设置了expectedmodCount值，则异常不会抛出。
+        场景：java.util包下的集合类都是快速失败的，不能在多线程下发生并发修改。
+    fail-safe（安全失败）：
+        遍历集合的时候，先复制原有集合内容，在拷贝的集合上遍历。
+        场景：java.util.concurrent包下的容器都是安全失败，可以在多线程下并发使用。
+
+58、IO 和 NIO的区别，NIO优点
+
+60、一个”.java”源文件中是否可以包含多个类（不是内部类）？有什么限制
+    可以包含多个类，但是只允许一个有public类，并且类名必须和文件名一致。
+    如果一个文件有多个public类，程序就不知道从哪里进入。
+
+66、static关键字有哪些用法
+    方便在没有创建对象的情况下来进行调用（方法、变量）。
+    在static方法内部不能调用非静态方法，反过来可以。
+    可以在没有创建任何对象的前提下，仅仅通过类本身来调用static方法。
+
+69、this、super什么时候使用
+    this相当于对象自身。
+    super：
+        可以理解为父类对象。
+        super.xxx引用父类属性。
+        super.xxx()调用父类方法或构造函数。
+
 70、public static void 写成 static public void会怎样
+    效果一样。
+    习惯上是[访问限定符] [static] [final] [类型名]
     说明一下public static void main(String args[])这段声明里每个关键字的作用
-    请说出作用域public, private, protected, 以及不写时的区别
+    args获取命令行传参：java test a b c
+
 71、sizeof 是Java 的关键字吗
 
-72、static
-    static class 与 non static class的区别
-    static 关键字是什么意思？Java中是否可以覆盖(override)一个private或者是static的方法
-    静态类型有什么特点
-    main() 方法为什么必须是静态的？能不能声明 main() 方法为非静态
-    是否可以从一个静态（static）方法内部发出对非静态（non-static）方法的调用
-    静态变量在什么时候加载？编译期还是运行期？静态代码块加载的时机呢
-    成员方法是否可以访问静态变量？为什么静态方法不能访问成员变量
-
 73、switch
-    switch 语句中的表达式可以是什么类型数据
-    switch 是否能作用在byte 上，是否能作用在long 上，是否能作用在String上
+    switch 语句中的变量类型可以是： byte、short、int 或者 char。
+    从 Java SE 7 开始，switch 支持字符串 String 类型了，同时 case 标签必须为字符串常量或字面量。
 
-74、while 循环和 do 循环有什么不同
 75、操作符
-    &操作符和&&操作符有什么区别?
-    a = a + b 与 a += b 的区别？
-    逻辑操作符 (&,|,^)与条件操作符(&&,||)的区别
-    3*0.1 == 0.3 将会返回什么？true 还是 false？
+    3*0.1 == 0.3 将会返回什么？true 还是 false？ 
+        false, 浮点数不能精确表示。
+        使用BigDecimal。BigDecimal的解决方案就是，不使用二进制，而是使用十进制（BigInteger）+小数点位置(scale)来表示小数。
+
     float f=3.4; 是否正确？
+        在java里面，没小数点的默认是int,有小数点的默认是 double; 
+        编译器可以自动向上转型，如int 转成 long 系统自动转换没有问题，因为后者精度更高 
+        double 转成 float 就不能自动做了，所以后面的加上个 f;
+
     short s1 = 1; s1 = s1 + 1;有什么错?
+        低类型和高类型运算时必须转换成高类型，s1转换为int然后+1，此时由值为int型，再复制给左侧的short，精度丢失。
+    
+    short s2 = 1; s2 += 1;
+        正确。编译器做了处理。
+
 76、基本类型
-    基础类型(Primitives)与封装类型(Wrappers)的区别在哪里
-    简述九种基本数据类型的大小，以及他们的封装类
-    int 和 Integer 哪个会占用更多的内存？ int 和 Integer 有什么区别？parseInt()函数在什么时候使用到
+    int 和 Integer 哪个会占用更多的内存？ 
+        Integer是个对象，不仅保存数值，还会在堆中保存对象引用。
+    parseInt()函数在什么时候使用到
+        int x =Integer.parseInt("9");
+        double c = Double.parseDouble("5");
+        int b = Integer.parseInt("444",16);
     float和double的默认值是多少
+       0.0 
     如何去小数四舍五入保留小数点后两位
+        // 直接截掉
+        double d = 114.145;
+        double d = 114.145;
+        DecimalFormat df = new DecimalFormat("#.00");
+        String str = df.format(d);
+        
+        // 保留后两位，四舍五入
+        String.format("%.2f", d);
+
     char 型变量中能不能存贮一个中文汉字，为什么
+        char占两字节，Unicode编码使用两个字节。
 
 77、类型转换
     怎样将 bytes 转换为 long 类型
@@ -288,14 +591,19 @@
     数组和链表数据结构描述，各自的时间复杂度
     数组有没有length()这个方法? String有没有length()这个方法
 
-79、队列
-    队列和栈是什么，列出它们的区别
-    BlockingQueue是什么
-    简述 ConcurrentLinkedQueue LinkedBlockingQueue 的用处和不同之处。
-    ArrayList、Vector、LinkedList的存储性能和特性
-
 80、ByteBuffer 与 StringBuffer有什么区别
-
+    1）String 转换 ByteBuffer：
+        private ByteBuffer convertStringToByte(String content) throws UnsupportedEncodingException {
+            return ByteBuffer.wrap(content.getBytes("utf-8"));
+        }
+        
+    2）ByteBuffer 转换 String：
+        public String decode(ByteBuffer bb) {  
+            Charset charset = Charset.forName("utf-8");
+            return charset.decode(bb).toString();   
+        } 
+    4）byte[] 转 ByteBuffer
+        ByteBuffer buffer = ByteBuffer.wrap(Bytes[]);
 81、HashMap
     HashMap的工作原理是什么
     内部的数据结构是什么
@@ -307,8 +615,8 @@
     如何决定选用HashMap还是TreeMap
     如果HashMap的大小超过了负载因子(load factor)定义的容量，怎么办
     HashMap 是线程安全的吗？并发下使用的 Map 是什么，它们内部原理分别是什么，比如存储方式、 hashcode、扩容、 默认容量等
+82、
     HashSet
-
     HashSet和TreeSet有什么区别
     HashSet 内部是如何工作的
     WeakHashMap 是怎么工作的？
@@ -457,9 +765,6 @@
     2.InputStream 和reader流的区别
     3.给一个JDK编码的，以UTF-8编码输出的方法
 
-96、序列化
-    什么是序列化？如何实现 Java 序列化及注意事项
-    Serializable 与 Externalizable 的区别
 
 97、Socket
     socket 选项 TCP NO DELAY 是指什么
@@ -506,10 +811,6 @@
     接口是否可继承接口
     为什么要使用接口而不是直接使用具体类？接口有什么优点
 
-103、泛型
-    泛型的存在是用来解决什么问题
-    泛型的常用特点
-    List能否转为List
 104、工具类
     日历
     Calendar Class的用途
@@ -557,11 +858,12 @@
 
 108、面向对象的特点
 109、java继承有哪几种？顶级类是什么？
-110、Object类都有什么方法？
-111、1 ==与equals的区别
 112、修改equals的时候为何要修改hashcode()
+    equals不同，hashcode不必相同，因为不同的对象应该具有不同的散列值。
+    equals相同，hashcode必须相同。
+    如果不这样做到话，就会违反Object.hashCode的通用约定，从而导致该类无法与所有基于散列值(hash)的集合类结合在一起正常运作，这样的集合类包括hashMap、HashSet和Hashtable。
+    Object中的hashcode是JVM根据某种策略生成的。
 113、如果让你设计一个类作为hashMap的key，你会注意什么 （就是设计hashcode时候会注意什么）
-114、equals相等hashcode一定相等吗？ hashcode相等，equals一定相等吗
 115、hashmap
     1 刚才讲到了hashMap,那你就讲一下hashMap的具体实现。
     2 你会如何做的线程安全的hashMap
@@ -582,7 +884,6 @@
 
 220、Java中的switch语句的参数？python中有无switch语句？
 
-221、Java的Object类中的方法及其作用？
 222、大数据排序？和取最大前N条？
 223、Java中类加载的过程?类加载器？
 224、动态加载类的框架了解哪些？
@@ -633,7 +934,6 @@
 20、AOP和IOC原理
 21、Spring怎样解决循环依赖的问题
 22、dispatchServlet怎样分发任务的
-24、Object类的主要方法？
 22、描述一下Java异常层次结构。
     Error：错误，是程序无法处理的错误。比如OutOfMemoryError。
     Exception：异常，是程序本身可以处理的异常。NullPointerException、ArithmeticException、ArrayIndexOutOfBoundException
@@ -744,9 +1044,6 @@ Java IO 主要的接口、实现？
       //关闭流
       ps.close();
      ```
-
-什么是Serializable、Externalizable，如何使用？
-    一个类要想实现序列化，就必须实现Serializable接口进行自动序列化，或实现Externalizable进行手动序列化。
 
 字节流和字符流有什么区别，如何使用？
     读写的时候，一个按字节读，一个按字符。
@@ -900,13 +1197,6 @@ int和Integer有什么别？
     官方原则：1、两个对象equals相等，hashCode就要相等。
              2、两个对象hashCode相等，不一定要求equals相等。
 
-4.final 在 java 中有什么作用？
-    final类不能被继承。
-    final方法不能被重写。
-    final成员变量必须声明的时候赋值或在构造函数中赋值。
-    final变量不能被再次赋值。引用的内容可以变化。
-    String和Integer都是final修饰的。为了安全和效率，用的多，非常底层的一个类。
-    被final修饰的函数会被直接插入到函数调用处，减少了函数调用的次数（类内部有个函数签名和函数地址的映射表）。但替换太多会导致内嵌之后的代码长度大大增加。增加了jvm解释字节码的时间。
 5.java 中的 Math.round(-1.5) 等于多少？
     Math.round(-10.5)加0.5向下取整：-10
     Math.ceil(-10.2) 取大 -10
@@ -1098,179 +1388,6 @@ int和Integer有什么别？
         Collections.max(Collection, Comparator) 根据指定比较器产生的顺序，返回指定Collectiond的最小（大）
     Arrays同样也是数组工具类。
 
-35.并行和并发有什么区别？
-    单个CPU执行多个线程，多个线程按时间片轮流执行就是并发。每一时刻，只会有一个线程被执行。
-    多个CPU同时执行多个线程是并行，同一时刻可以有多个线程在执行。
-36.线程和进程的区别？
-    进程是资源（cpu、内存等）分配的最小单位，线程是程序执行的最小单位。
-    一个进程可以有多个线程。
-    进程粒度比线程大。
-37.守护线程是什么？
-    只有当最后一个非守护线程结束时，守护线程才会随着JVM一同结束。
-    GC是守护线程。
-    childThread.setDaemon(true);必须在childThread.start();之前。
-    在Daemon线程中产生的新线程也是Daemon的。
-    java的线程池会将守护线程转换为用户线程。
-
-    public class DeamonTest {
-        public static void main(String[] args) {
-            Thread mainThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    Thread childThread = new Thread(new ChildThread());
-                    // 将childThread设置为守护线程。
-                    // mainThread线程退出后，守护线程也即退出
-                    childThread.setDaemon(true);
-                    childThread.start();
-                    System.out.println("DeamonTest.run");
-                }
-            });
-            mainThread.start();
-        }
-    }   
-38.创建线程有哪几种方式？
-    1) 继承Thread
-    2) 实现Runnable
-    3) Callable和FutureTask
-        1)和2)的缺陷是：在执行完任务之后无法获取执行结果。
-        
-        FutureTask是一种可以取消的异步的计算任务。它的计算是通过Callable实现的，等价于可以携带结果的Runnable。
-        有三个状态：等待、运行、完成（完成包括所有计算以任意的方式结束(正常结束、取消、异常)）。
-        主要方法：
-            1、get() 获取结果只有在计算完成时获取，否则一直阻塞直到任务转入完成状态。
-    https://www.cnblogs.com/dolphin0520/p/3949310.html
-    http://www.importnew.com/30531.html
-        
-        FutureTask实现了Runnable和Future
-
-        public class MyCallable implements Callable<String> {
-            private int count = 20;
-
-            @Override
-            public String call() throws Exception {
-                for (int i = count; i >0 ; i--) {
-                    System.out.println(Thread.currentThread().getName()+"当前票数：" + i);
-                }
-                return "sale out";
-            }
-
-            public static void main(String[] args) throws ExecutionException, InterruptedException {
-                Callable<String> callable = new MyCallable();
-                FutureTask<String> futureTask = new FutureTask<>(callable);
-                Thread mThread = new Thread(futureTask);
-                Thread mThread2 = new Thread(futureTask);
-                Thread mThread3 = new Thread(futureTask);
-                mThread.start();
-                mThread2.start();
-                mThread3.start();
-                System.out.println(futureTask.get());
-            }
-        }
-
-39.说一下 runnable 和 callable 有什么区别？
-    1、Runnable线程体在run()中，callable线程体在call()中。
-    2、Callable接口支持返回线程执行结果，通过FutureTask.get()方法获取执行结果，get方法会阻塞直到结果返回。
-    3、Runnable没有返回值。Callable + FutureTask 可以获取多线程运行的结果，也可以在等待太长时间没有获取到需要的数据的情况下取消该线程的任务。
-
-40.线程有哪些状态？
-    1、新建（NEW）：实现Runnable接口和继承Thread可以得到一个线程类，new一个实例，线程就进入了新建状态，即 start() 之前的状态。
-    2、可运行（RUNNABLE）：
-            有资格运行，但还没运行，等待调度。
-            调用线程的start()方法。
-            当前线程的sleep()结束。
-            其他线程join()结束。
-            调用当前线程的yield()方法。
-    3、运行（RUNNING）
-            线程调度程序从可运行池中选择一个线程设置为当前线程，这是线程进入运行状态的唯一方式。
-    4、阻塞（BLOCKED）
-            当前线程调用Thread.sleep()。
-            运行在当前线程的其他线程调用join()方法。
-            等待用户输入的时候。
-    5、死亡（DEAD）
-            线程的run()方法完成时，就死去了，死去的线程不能复生。
-            或程序退出。
-
-41.sleep() 和 wait() 有什么区别？
-    ====sleep()====
-    sleep()是线程类Thread的方法；
-    调用sleep()不会释放锁，阻塞线程，直到时间到后再度执行。
-    ====wait()====
-    而wait()是Object的方法。
-    wait要持有锁，只能在同步方法或同步块中调用。调用锁资源的wait()方法。
-    调用wait()会释放锁，需要调用notify/notifyAll后重新获取对象锁资源后才能继续执行。
-
-42.notify()和 notifyAll()有什么区别？
-    notify()唤醒在此监视器上等待的一个线程。
-    notifyAll()唤醒在此监视器上等待的全部线程。
-    但都要等到当前线程释放锁之后，被唤醒的线程才有可能执行。
-
-43.线程的 run()和 start()有什么区别？
-    调用Thread的start()方法，可以异步启动线程，但启动的线程不会马上运行，会放到等待队列中等待CPU调度。只有线程被CPU调度才会调用run()方法执行。
-    线程的逻辑写在run()。线程创建后只有调用start()之后才能进入可运行状态，等待调度执行。
-    可直接调用run()方法。
-
-44.创建线程池有哪几种方式？
-    newSingleThreadExecutor
-    创建一个单线程的线程池。这个线程池只有一个线程在工作，也就是相当于单线程串行执行所有任务。如果这个唯一的线程因为异常结束，那么会有一个新的线程来替代它。此线程池保证所有任务的执行顺序按照任务的提交顺序执行。
-    
-    newFixedThreadPool
-    创建固定大小的线程池。每次提交一个任务就创建一个线程，直到线程达到线程池的最大大小。线程池的大小一旦达到最大值就会保持不变，如果某个线程因为执行异常而结束，那么线程池会补充一个新线程。
-    
-    newCachedThreadPool
-    创建一个可缓存的线程池。如果线程池的大小超过了处理任务所需要的线程，
-    那么就会回收部分空闲（60秒不执行任务）的线程，当任务数增加时，此线程池又可以智能的添加新线程来处理任务。此线程池不会对线程池大小做限制，线程池大小完全依赖于操作系统（或者说JVM）能够创建的最大线程大小。
-    
-    newScheduledThreadPool
-    创建一个大小无限的线程池。此线程池支持定时以及周期性执行任务的需求。
-
-45.线程池都有哪些状态？
-
-46.线程池中 submit()和 execute()方法有什么区别？
-    创建并开启一个线程开销很大，线程池可以避免频繁创建关闭线程，以缓解性能问题。
-    线程在被使用前就存在线程池，执行完任务后，线程返回线程池等待下次使用。
-    java通过executor对象来实现自己的线程池模型，可以使用exector接口或其他线程池的实现。
-
-    execute(Runnable x) 没有返回值。可以执行任务，但无法判断任务是否成功完成。——实现Runnable接口
-    submit(Runnable x) 返回一个future。可以用这个future来判断任务是否成功完成。——实现Callable接口
-
-    =============接口Executor==========================
-    ```
-    简单使用:
-    public class mainTest {
-        public static void main(String[] args) {
-            Executor executor = Executors.newSingleThreadExecutor();
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    System.out.println("mainTest.run");
-                }
-            });
-        }
-    }
-    ```
-    如果有工作线程可用，execute()方法将执行语句，否则就把Runnable任务放进队列，等待线程可用。
-    
-    Executors类里的工厂方法可以创建很多类型的线程池（最终构建线程池使用ThreadPoolExecutor）：
-    newSingleThreadExecutor()：包含单个线程和无界队列的线程池，同一时间只能执行一个任务。
-    newFixedThreadPoll()：包含固定数量线程并共享无界队列的线程池；当所有线程处于工作状态，有新任务提交时，任务在队列中等待，直到一个线程变为可用状态。
-    newCacheThreadPool()：只有需要时创建新线程的线程池。
-    newWorkStealingThreadPool()：基于工作窃取算法的线程池。
-
-    ====================接口ExecutorService===============
-    ExecutorService是Executor的子接口，其定义了更多的方法。
-    submit()方法可以返回Furute对象。
-    
-    ===================接口ScheduledExecutorService========
-    ScheduledExecutorService是ExecutorService的一个子接口，增加了调度任务的方法。
-    sechedule()方法的参数指定执行的方法、延时和TimeUnit
-    
-    ```
-    ScheduledExecutorService executor = Executors.newScheduledThreadPool(10);
-    Future<Double> future = executor.schedule(callableTask, 2, TimeUnit.MILLISECONDS); 
-    ```
-    =================ThreadPoolExecutor和ForkJoinPool==============
-    ExecutorService的两个实现。
-
 74.throw 和 throws 的区别？
     throws 是用来声明一个方法可抛出的所有异常信息，throws是将异常声明但不处理，而是将异常往上传，传给调用者。
     throw 抛出一个具体的异常类型。
@@ -1280,7 +1397,10 @@ int和Integer有什么别？
     final修饰的成员变量要赋值初始化或在构造方法中赋值。
     final修饰的局部变量必须要赋值初始化，并且不能修改。
     final修饰的方法会被JVM优化。
+    
     GC前对象会调用finalize，可在finalize中将自身（this）赋值给其他变量从而起死回生。
+    一个对象被GC之前会调用finalize()，可以重写finalize()让即将被清理的对象起死回生（Person.person = this;）
+    finalize()至多由GC执行一次，用户可以手动调用对象的finalize(),但并不影响GC对finalize的行为。
 76.try-catch-finally 中哪个部分可以省略？
     1) finally可以省略。finally块最终都会执行。
     2) 关闭资源的操作放到finally中，因为try块中抛出异常后不会继续向下执行。程序可能无法到达try的尾部，但一定会到达finally。
@@ -1336,3 +1456,5 @@ int和Integer有什么别？
                 亦可使用Optional优雅地决绝判断null的多层嵌套。
         ArrayStoreException(数据存储异常)
         BufferOverflowException(缓冲溢出异常)
+        
+什么是lamda表达式、函数式编程？Java.util.function包里面的 Supplier/Consumer/Predicate/BiFunction 分别是什么含义？
