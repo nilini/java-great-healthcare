@@ -488,8 +488,6 @@
 
 45、hashtable和hashmap的区别及实现原理，hashmap会问到数组索引，hash碰撞怎么解决
 
-46、arraylist和linkedlist区别及实现原理
-
 50、TreeMap的实现原理
     红黑树
 
