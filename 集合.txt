@@ -29,3 +29,56 @@ ArrayList
 
 Vector
     底层基于动态数组，使用synchronized确保线程安全。
+
+Collection 和 Collections 有什么区别？
+    Collection是集合类的一个顶级接口。
+    Collections是集合类的一个工具类：
+        Collections.sort(list) 排序
+        Collections.shuffle(list) 混排
+        Collections.reverse(list) 反转
+        Collections.fill(List list, Object o) 替换所有元素
+        Collections.copy(List list1, List list2) 将list2中的元素全部复制到list1中，并覆盖相应索引的元素。
+        Collections.min(Collection, Comparator)
+        Collections.max(Collection, Comparator) 根据指定比较器产生的顺序，返回指定Collectiond的最小（大）
+    Arrays同样也是数组工具类：
+        Arrays.asList() 返回由指定数组支持的固定大小列表
+            使用包装类数组：
+                asList方法的参数必须是对象或者对象数组，而原声数据类型不是对象。当传入一个原生数据类型数组时，asList的真正得到的参数就不是数组中的元素，而是数组本身，此时List的唯一元素就是这个数组。
+                1） Integer[] myArray = { 1, 2, 3 };
+                    List myList = Arrays.asList(myArray);
+                    System.out.println(myList.size());
+                2） int[] intArray = { 5, 10, 21 };
+                    //Java 8 新引入的 Stream 操作
+                    List myList = Arrays.stream(intArray).boxed().collect(Collectors.toList());
+            
+            视图修改List的大小：
+                添加删除元素都会报错。
+                asList 方法返回的确实是一个 ArrayList ,但这个 ArrayList 并不是 java.util.ArrayList ，而是 java.util.Arrays 的一个内部类。这个内部类用一个 final 数组来保存元素，因此用 asList 方法产生的 ArrayList 是不可修改大小的。
+            
+            创建一个真正的ArrayList：
+                String[] myArray = { "Apple", "Banana", "Orange" };
+                List<String> myList = new ArrayList<String>(Arrays.asList(myArray));
+                myList.add("Guava");
+            
+            使用Spring自带的工具类：
+                int[]  a = {1,2,3};
+                List list = CollectionUtils.arrayToList(a);
+                System.out.println(list);
+                
+            自己的方法实现：
+                for循环数组，add元素到list。
+        Arrays.fill(Object[] array, Object obj) 用指定元素填充整个数组
+            Integer[] data = {1, 2, 3, 4};
+            Arrays.fill(data, 9);
+            System.out.println(Arrays.toString(data)); // [9, 9, 9, 9]
+        
+        Arrays.fill(Object[] array, int fromIndex, int toIndex, Object obj) 用指定元素填充数组，从起始位置到结束位置，取头不取尾 (会替换掉数组中原来的元素)
+            Integer[] data = {1, 2, 3, 4};
+            Arrays.fill(data, 0, 2, 9);
+            System.out.println(Arrays.toString(data)); // [9, 9, 3, 4]
+        Arrays.stream(T[] array) 返回数组的流 (Stream)，然后我们就可以使用 Stream 相关的许多方法了
+            Integer[] data = {1, 2, 3, 4};
+            List<Integer> list = Arrays.stream(data).collect(toList());
+            System.out.println(list); // [1, 2, 3, 4]
+
+        

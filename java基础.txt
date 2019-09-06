@@ -485,7 +485,7 @@
     clone()是被本地方法实现。
 
 44、Java NIO使用
-
+    https://www.zhihu.com/question/342093305/answer/801167091
 45、hashtable和hashmap的区别及实现原理，hashmap会问到数组索引，hash碰撞怎么解决
 
 50、TreeMap的实现原理
@@ -957,10 +957,16 @@
     3）有异常：
             catch能捕获：try中语句执行到异常时，跳转到catch中执行，最后执行finally中的语句，但是finally之后的语句不会被执行。
             catch不能捕获：try中语句执行到异常时，此时catch无法捕获，则交给jvm处理，但是finally中的语句还是会被执行。
-33、40、Java中的参数传递时传值呢？还是传引用？
+
+33、Java中的参数传递时传值呢？还是传引用？
+    传递值，引用也是值
+
 33、对象引用类型分为哪几类？
     强、软、弱、虚
+
 34、一个空Object对象的占多大空间？
+    引用占内存+空对象占堆内存
+
 35、Java中有没有指针的概念？
     java中没有指针，但java中有引用。
     基本类型，值就直接保存在变量中。
@@ -1199,6 +1205,7 @@ int和Integer有什么别？
     Math.round(-10.5)加0.5向下取整：-10
     Math.ceil(-10.2) 取大 -10
     Math.floor(-10.2) 取小 -11
+    
 6.String 属于基础的数据类型吗？
     String不属于基本数据类型。
     基本数据类型：byte、short、int、long、float、double、char、boolean
@@ -1209,6 +1216,7 @@ int和Integer有什么别？
     float: 4字节
     double: 8字节
     char: 2字节
+
 7.java 中操作字符串都有哪些类？它们之间有什么区别？
     String、StringBuilder、StringBuffer
     String是不可变类，被声明为final，所有属性也都是final，对String对象的操作都会产生一个新的String对象。线程不安全
@@ -1255,6 +1263,7 @@ int和Integer有什么别？
     str.replace()
     str.split()
     str.indexof()
+
 11.抽象类必须要有抽象方法吗？
     抽象类能继承一个普通类（或抽象类），实现多个接口。
     抽象类和普通类相比只是不能被实例化，只能作为子类的超类。
@@ -1268,16 +1277,20 @@ int和Integer有什么别？
     接口是抽象方法的集合，一个类实现了某个接口就必须实现抽象方法。
     接口抽象方法默认修饰符是public（可以不写），不能使用其他修饰符。
     java 8中接口可以包含具体的方法实现，方法实现必须default修饰。
+
 12.普通类和抽象类有哪些区别？
     抽象类不能被实例化。
     抽象类可以有构造方法。
     抽象类可以有main方法。
     抽象类可以有抽象方法。
+
 13.抽象类能使用 final 修饰吗？
     final修饰的类不能被继承，抽象类只有被继承才能使用。
+
 15.java 中 IO 流分为几种？
     字节流：按8位传输。所有文件的村塾都是按字节（byte）存储。字节流可以处理任何类型的IO操作，包括二进制。
     字符流：字符流只能处理字符。包括Unicode字符（字节流不行）
+
 16.BIO、NIO、AIO 有什么区别？  
     同步和异步：同步和异步关注的是消息通信机制。
                同步：发起一个调用，在没得到结果之前，该调用就不返回，但是一旦调用返回，就得到返回值了。调用者主动等待这个调用的结果。
@@ -1373,18 +1386,6 @@ int和Integer有什么别？
     list(FilenameFilter filter) 获取满足过滤器FilenameFilter条件的所有目录或文件
     listFiles() 获取路径表示目录下的所有文件和目录对象
     listFiles(FilenameFilter filter) 获取满足过滤器FilenameFileter条件的所有目录或文件对象
-18.java 容器都有哪些？
-19.Collection 和 Collections 有什么区别？
-    Collection是集合类的一个顶级接口。
-    Collections是集合类的一个工具类：
-        Collections.sort(list) 排序
-        Collections.shuffle(list) 混排
-        Collections.reverse(list) 反转
-        Collections.fill(List list, Object o) 替换所有元素
-        Collections.copy(List list1, List list2) 将list2中的元素全部复制到list1中，并覆盖相应索引的元素。
-        Collections.min(Collection, Comparator)
-        Collections.max(Collection, Comparator) 根据指定比较器产生的顺序，返回指定Collectiond的最小（大）
-    Arrays同样也是数组工具类。
 
 74.throw 和 throws 的区别？
     throws 是用来声明一个方法可抛出的所有异常信息，throws是将异常声明但不处理，而是将异常往上传，传给调用者。
@@ -1455,4 +1456,8 @@ int和Integer有什么别？
         ArrayStoreException(数据存储异常)
         BufferOverflowException(缓冲溢出异常)
         
-什么是lamda表达式、函数式编程？Java.util.function包里面的 Supplier/Consumer/Predicate/BiFunction 分别是什么含义？
+什么是lamda表达式、函数式编程？
+    lambda表达式，匿名函数，也可以称为闭包。
+    lambda允许把函数作为一个方法的参数（函数作为参数传递进方法中）
+
+Java.util.function包里面的 Supplier/Consumer/Predicate/BiFunction 分别是什么含义？
