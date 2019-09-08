@@ -1,0 +1,462 @@
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Spring<<<<<<<<<<<<<<<<<<<<<<<<<<<<,
+对Spring的理解，项目中都用什么？怎么用的？说说对IOC、和AOP的理解及实现原理
+说说Spring AOP， 什么是切面、切点、连接切点、通知方法？
+
+什么是Spring声明式事务，如何配置？
+
+@Transactional注解一般写在什么位置?如何控制其回滚?
+21，SpringAOP，XML配置<aop:config>，切面<aop:aspect>切点<aop:pointcut>，连接切点和通知方法<aop:before>和<aop:after>等，
+    注解可以直接使用@before执行方法@after ，@before(“pointcut()”) ，@after("pointcut")， @Aroud("excutete())，@AfteReturning，@AfterThrowing，
+    可作日志事务，权限等待，AOP即通过把具体的类创建对应的 代理类，从代理类来对具体进行操作。                      
+    目标实现了接口，默认采用JDK实现AOP，也可以强制使用CGlib来实现AOP，目标没有实现接口的话，则必须采用CGlib，Spring自动在JDK和CGlib切换。
+    如果要求spring强制使用CGlib实现AOP，则可以配置，添加Cglib库。。。jar， Spring配置文件中加入<aop:aspecj-autoproxy proxy-target-Class=true>                                                                                                                                                                                   
+
+70.spring mvc 和 struts 的区别是什么？
+    struts2是基于类的拦截。每次处理一个请求，struts就会实例化一个对象，这样就不会有线程安全的问题了。
+    spring mvc是方法级别的拦截，一个方法对应一个Request上下文，所以方法基本上是独立的，独享request，response数据。而每个方法同时又和一个url对应，参数的传递是直接注入到方法中的，是方法所独有的。
+    处理结果通过ModelMap返回给框架。Spring的controller默认是Singleton的，这意味着每一个request过来，系统都会用原有的instance去处理。
+
+    为应对线程安全问题，尽量避免在controller中定义实例变量。如果非要用到实例变量：
+    1）在controller中使用ThreadLocal变量
+    2）在spring配置文件controller中声明scope = "prototype"，每次都创建新的controller。
+    3）不修改变量，只调用方法就不会有线程安全问题。比如注入service，虽然service并不是线程安全的，但是只会调用service中的方法。
+
+90.为什么要使用 spring？
+    1、spring是个大工厂，可以将所有对象创建和依赖关系维护，交给spring管理。不用手动创建对象。
+    通过代码解耦，提高代码灵活性（依赖注入 DI）
+    简化开发，用最少的代码，做最多的事情（AOP，Template）
+    提供公共抽象，屏蔽底层，开箱即用，替换方便（Spring Cache，框架，中间件集成）
+    MVC模型的快速实现（视图解析，数据转换）
+91.解释一下什么是 aop？
+    Spring Aop是使用动态代理来实现的。基于JDK的动态代理和基于Cglib的代理。
+    aop是面向切面编程。通过动态代理实现程序功能的统一维护。
+    好处：
+        1）集中处理某一关注电/横切逻辑
+        2）可以很方便地添加/删除关注点
+        3）侵入性少，增强代码可读性及可维护性
+    spring中的使用：
+        Aspect：切面，是一个类，里面定义了通知和切点。
+        PointCut：切点。
+        advice：通知。
+            @Before：前置通知，在调用目标方法之前执行通知定义的任务。
+            @After：目标方法调用之后执行。不管成功与否。
+            @After-returning：目标方法执行结束，且成功时候调用。
+            @After-throwing：异常通知，目标方法执行过程中发生异常，则执行通知定义的任务。
+            @Around：环绕通知，在目标方法执行前后，都需要执行通知定义的任务。
+    切面表达式：execution (* com.sample.service.impl..*.*(..))
+               第一个*：返回类型，表示所有的类型。
+               com.sample.service.impl..：表示该路径下的包及子包。
+               第二个*：所有类。
+               第三个*：所有方法。
+               (..)：表示方法的参数。两个点表示任何参数。
+    /**
+    * 系统服务组件Aspect切面Bean
+    * @author Shenghany
+    * @date 2013-5-28
+    */
+    @Component   //声明这是一个组件
+    @Aspect      //声明这是一个切面Bean
+    @Order(3)    //定义切面执行顺序
+    public class ServiceAspect {
+        private final static Log log = LogFactory.getLog(ServiceAspect.class);
+        
+        //配置切入点,该方法无方法体,主要为方便同类中其他方法使用此处配置的切入点
+        @Pointcut("execution(* cn.ysh.studio.spring.aop.service..*(..))")
+        public void aspect(){	
+
+        }
+        /*
+        * 配置前置通知,使用在方法aspect()上注册的切入点
+        * 同时接受JoinPoint切入点对象,可以没有该参数
+        */
+        @Before("aspect()")
+        public void before(JoinPoint joinPoint){
+            if(log.isInfoEnabled()){
+                log.info("before " + joinPoint);
+            }
+        }
+        //配置后置通知,使用在方法aspect()上注册的切入点
+        @After("aspect()")
+        public void after(JoinPoint joinPoint){
+            if(log.isInfoEnabled()){
+                log.info("after " + joinPoint);
+            }
+        }
+        //配置环绕通知,使用在方法aspect()上注册的切入点
+        @Around("aspect()")
+        public void around(JoinPoint joinPoint){
+            long start = System.currentTimeMillis();
+            try {
+                ((ProceedingJoinPoint) joinPoint).proceed();
+                long end = System.currentTimeMillis();
+                if(log.isInfoEnabled()){
+                    log.info("around " + joinPoint + "\tUse time : " + (end - start) + " ms!");
+                }
+            } catch (Throwable e) {
+                long end = System.currentTimeMillis();
+                if(log.isInfoEnabled()){
+                    log.info("around " + joinPoint + "\tUse time : " + (end - start) + " ms with exception : " + e.getMessage());
+                }
+            }
+        }
+        //配置后置返回通知,使用在方法aspect()上注册的切入点
+        @AfterReturning("aspect()")
+        public void afterReturn(JoinPoint joinPoint){
+            if(log.isInfoEnabled()){
+                log.info("afterReturn " + joinPoint);
+            }
+        }
+        
+        //配置抛出异常后通知,使用在方法aspect()上注册的切入点
+        @AfterThrowing(pointcut="aspect()", throwing="ex")
+        public void afterThrow(JoinPoint joinPoint, Exception ex){
+            if(log.isInfoEnabled()){
+                log.info("afterThrow " + joinPoint + "\t" + ex.getMessage());
+            }
+        }
+        
+    }
+92.解释一下什么是 ioc？
+
+93.spring 有哪些主要模块？
+    Spring Core：提供IOC
+    Spring Context：
+    Spring DAO：提供了JDBC的抽象层，可以消除冗长的JDBC编码和解析数据库厂商特有的错误代码。还提供了一种比编程性更好的声明性事务管理方法。
+    Spring ORM：
+    Spring AOP：
+    Spring Web：提供了基础的针对Web开发的继承特性，例如多文件上传。
+    Spring Web MVC：提供了Web应用中的MVC实现。
+94.spring 常用的注入方式有哪些？
+    1）构造方法
+    2）setter方法
+    3）基于注解的注入
+        四种注解可以注入bean：
+            @Component 可用于注入所有bean
+            @Repository 主要用于注入dao层的bean
+            @Controlelr 主要用于注入控制层的bean
+            @Service    主要用于注入服务层的bean
+        
+95.spring 中的 bean 是线程安全的吗？
+    原型bean，每次创建一个新对象，也就是线程之间并不存在bean共享，自然是不会有线程安全的问题。
+    单例bean，所有线程都共享一个实例bean，因此存在资源的竞争。如果单例bean是一个无状态的bean，比如controller、service、dao。这些bean
+    大多是无状态的，只关注于方法本身。
+    对于有状态的bean，spring官方提供的bean，一般提供了通过ThreadLocal去解决线程安全的方法。比如RequestContextHolder、TransactionSynchronizationManager、LocaleContextHolder等。
+96.spring 支持几种 bean 的作用域？
+    单例（singleton）：默认作用域。
+    原型（prototype）：原型，每次创建一个新对象。
+    请求（request）：每次http请求创建一个新对象，适用于WebApplicationContext环境下。
+    会话（session）：同一个会话共享一个实例，不同会话使用不同的实例。
+    全局会话（global-session）：所有会话共享一个实例。 
+97.spring 自动装配 bean 有哪些方式？
+    @Resource
+    @Autowired
+98.spring 事务实现方式有哪些？
+
+99.说一下 spring 的事务隔离？
+    定义了五种表示事务隔离界别的常量：
+    1）TransactionDefinition.ISOLATION_DEFAULT：使用后端数据库默认的隔离界别，MySQL默认采用的REPEATABLE_READ隔离级别，Oracle默认采用的READ_COMMITTED隔离级别。
+    2）TransactionDefinition.ISOLATION_READ_UNCOMMITTED：读未提交
+    3）TransactionDefinition.ISOLATION_READ_COMMITTED：读已提交
+    4）TransactionDefinition.ISOLATION_REPEATABLE_READ：可重复读
+    5）TransactionDefinition.ISOLATION_SERIALIZABLE：序列化。事务串行化执行。
+    七种事务传播（事务传播行为是Spring提供的一种事务管理方式，它不是数据库提供的）
+    1）PROPAGATION_REQUIRED : 如果存在事务，加入当前事务；如果不存在，就新建一个事务。
+    2）PROPAGATION_SUPPORTS : 如果存在事务，加入当前事务；如果不存在，则非事务执行。
+    3）PROPAGATION_MANDATORY : 如果存在事务，加入当前事务；如果不存在，抛出异常（只能作为事务执行）。
+    4）PROPAGATION_REQUIRES_NEW : 如果有事务存在，则挂起当前事务，创建一个新的事务（两个事务没有关系）；如果不存在，则创建一个新事务。
+    5）PROPAGATION_NOT_SUPPORTED : 以非事务方式运行，如果有事务存在，挂起当前事务（非事务和外层事务没有关系）。
+    6）PROPAGATION_NEVER : 以非事务运行，如果有事务存在，抛出异常（只能作为非事务执行）。
+    7）PROPAGATION_NESTED : 如果不存在事务，则作为开启新事物；如果当前事务存在，则嵌套事务执行（外层事务失败，会回滚内层事务所做的动作；内层事务失败不影响外层事务的回滚）。
+    https://blog.csdn.net/weixin_39625809/article/details/80707695
+103.@Autowired 的作用是什么？
+    @Autowired和@Resource都可以用来装配bean。都可以写在字段上，或写在setter方法上。
+    @Autowired默认按类型装配。可和@Qualifier一起使用按名称装配:@Autowired() @Qualifier("baseDao")
+    @Resource默认按名称进行装配。名称可以通过name属性进行指定，如果没有指定name属性，当注解写在字段上时，默认取字段名。
+51.ThreadLocal 是什么？有哪些使用场景？
+    ThreadLocal类可以让创建的变量只被同一个线程进行读和写操作。因此，尽管两个线程同时执行一段相同的代码，而且
+    这段代码又有一个指向同一个ThreadLocal变量的引用，但是着两个线程依然不能看到彼此的ThreadLocal变量域。
+
+    ThreadLocal为每个线程创建了一个副本。
+    Spring使用ThreadLocal解决线程安全问题，只有无状态的Bean才可以在多线程环境下共享，在Spring中，绝大多数Bean都可以
+    声明为singleton作用域。Spring通过ThreadLocal解决Bean的线程安全问题。
+讲讲Spring加载流程。
+Spring如何管理事务的。
+Spring怎么配置事务（具体说出一些关键的xml 元素）。
+说说你对Spring的理解，非单例注入的原理？它的生命周期？循环注入的原理，aop的实现原理，说说aop中的几个术语，它们是怎么相互工作的。
+Spring加载过程？
+自己有没有写过类似Spring这样的AOP事务？
+Spring AOP IOC的实现原理，底层用什么实现的？
+spring框架中需要引用哪些jar包，以及这些jar包的用途
+1）spring-core.jar：包含spring框架基本的核心工具类，其他组件都要使用这个包里面的类，是其他组件的核心；
+  2）spring-bean.jar：是所有的应用都要用到的，包含访问配置文件、创建和管理bean以及进行IoC和DI操作所需的相关类；
+  3）spring-aop.jar：包含使用AOP特性时所需的类；
+  4）spring-context.jar：为spring核心提供了大量扩展；
+  5）spring-dao.jar：包含spring DAO、spring Transaction进行数据访问的所有类；
+  6）spring-hibernate.jar：包含spring对hibernate 2以及hibernate 3进行封装的所有类；
+  7）spring-jdbc.jar：包含spring对JDBC数据库访问进行封装的所有类；
+  8）spring-orm.jar：包含多DAO特性集进行了扩展；
+  9）spring-remoting.jar：包含支持EJB、JMS、远程调用Remoting方面的类；
+  10）spring-support.jar：包含支持缓存Cache、JAC、JMX、邮件服务、任务计划Scheduling方面的类；
+  11）spring-web.jar：包含web开发时，用到spring框架时所需的核心类；
+  12）spring-webmvc.jar：baohan Spring MVC框架相关的所有类；
+  13）spring-mock.jar：包含spring一整套mock类来辅助应用的测试。
+spring中beanFactory和ApplicationContext的联系和区别
+spring注入的几种方式
+spring如何实现事物管理的
+Spring是如何实现事务的
+spring加载bean的流程？
+spring的事务怎么使用？事务回滚？自定义异常？
+spring中循环注入的方式
+5.Spring的一些机制理解？IOc？AOP？IOc如何实现依赖注入的？Spring动态代理的实现方式？
+Spring的beanFactory和factoryBean的区别
+Spring的事务隔离级别，实现原理
+对Spring的理解，非单例注入的原理？它的生命周期？循环注入的原理，aop的实现原理，说说aop中的几个术语，它们是怎么相互工作的？
+拦截器和Intercepter？
+Spring中常用注解？
+Spring中如果一个注入一个对象，但是这个对象有多个实例，怎么处理？
+2、什么是基于注解的切面实现
+    1) 什么是AOP？
+    在程序运行时，动态的将代码切入到类的指定方法、指定位置上的编程思想就是面向切面编程。
+    AOP是OOP的补充，OOP从横向上区分出一个个类来，而AOP则是从纵向上对对象加入特定的代码。
+    为多个不具有继承关系的对象引入一个公共行为，例如日志、权限验证、事务等功能时，只能在在每个对象
+    里引入公共行为。这样做不便于维护，而且有大量重复代码。
+    2) 实现AOP的两种方式
+        原生JDK，代理类只需要实现InvocationHandler接口。
+        另一个是cglib。
+    3) Spring AOP 框架对 AOP 代理类的处理原则是
+        如果目标对象的实现类实现了接口，Spring AOP 将会采用 JDK 动态代理来生成 AOP 代理类；
+        如果目标对象的实现类没有实现接口，Spring AOP 将会采用 CGLIB 来生成 AOP 代理类——
+        不过这个选择过程对开发者完全透明、开发者也无需关心。
+Spring中bean的生命周期
+
+Spring的启动、加载过程？
+
+Spring中什么是Lazy-Load？
+
+Spring中Bean有哪些Scope？
+
+Spring如何解决循环依赖？
+    循环依赖就是循环引用，两个或多个bean相互持有对方。
+    1）构造器循环依赖：
+        表示通过构造器注入构成的循环依赖，此依赖是无法解决的。只能抛出BeanCurrentlyInCreationException异常表示循环依赖。
+        Spring容器将每一个正在创建的Bean标识符放在一个 “当前创建Bean池” 中。Bean标识符在创建过程中将一直保持在这个池中，
+        因此如果在创建Bean过程中发现自己已经在 “当前创建Bean池” 里时将抛出BeanCurrentlyInCreationException异常表示循环依赖，
+        对于创建完毕的Bean将从 “当前创建Bean池” 中清除掉。
+    2）setter循环依赖：
+        表示通过setter注入方式构成的循环依赖。
+        https://www.cnblogs.com/mxmbk/articles/5371676.html
+6、Spring AOP中代理选择
+    1) 如果目标对象实现了接口，默认情况下会采用JDK的动态代理实现AOP。
+    2) 如果目标对象实现了接口，也是可以强制使用cglib实现AOP。
+    3) 如果目标对象没有实现接口，则会使用cglib。
+    通过@EnableAspectJAutoProxy(proxyTargetClass = true)
+8、Spring AOP用到了动态代理；
+   Spring 事务管理用到了动态代理；
+   MyBatis数据库连接池用到了动态代理；
+   MyBatis创建Mapper用到了动态代理。
+
+21、Spring怎样解决循环依赖的问题
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>spring mvc<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<,,
+SpringMVC常用的注解，RequestBody，ResponseBody ，RequestParam，PathVariables，RestController，ControllerAdvice， WebInitParam，InitBinder
+SpringMVC如何做类型转换？
+SpringMVC如何做参数校验？
+srpingMVC的原理
+springMVC注解的意思
+34，SpirngMVC的生命周期 和 SpringBean的生命周期
+    SpirngMVC的生命周期 ：
+    A，DispatcherSerlvet（前端控制器）
+    B，-》 HandlerMapping（处理器映射器），根据xml注解查找对应的Hander -》 返回Handler
+    C，-》处理器适配器去执行Handler
+    D，-》Handler执行完成后给处理器适配器返回ModelAndView
+    E，-》前端控制器请求视图解析器去执行视图解析，根据逻辑视图名解析成真正的视图JSP，向前端控制器返回view
+    F，-》前端控制器进行视图渲染，将模型数据放到request-》返回给用户
+
+    SpringBean的生命周期：
+    Instance实例化-》设置属性值-》调用BeanNameAware的setBeanName方法-》调用BeanPostProsessor的预初始化方法-》调用InitializationBean的afterPropertiesSet()的方法-》调用定制的初始化方法callCustom的init-method-》调用BeanPostProsessor的后初始化方法-》Bean可以使用了 -》 容器关闭-》 调用DisposableBean的destroy方法-》调用定制的销毁方法CallCustom的destroy-method。
+
+springmvc用到的注解，作用是什么，原理。
+Springmvc 中DispatcherServlet初始化过程。
+100.说一下 spring mvc 运行流程？
+    https://www.cnblogs.com/gxc6/p/9544563.html
+    DispatcherServer：配置在web.xml中，拦截请求，自己定义拦截规则。
+    HandlerMapping：解析请求链接，然后根据请求链接找到执行这个请求的类（handler，即Controller）。找到handler之后封装成一个HandlerExecutionChain对象（包含Controller和一组拦截器）。
+
+    一个请求匹配前端控制器 DispatcherServlet 的请求映射路径(在 web.xml中指定), WEB 容器将该请求转交给 DispatcherServlet 处理
+    DispatcherServlet 接收到请求后, 将根据 请求信息 交给 处理器映射器 （HandlerMapping）
+    HandlerMapping 根据用户的url请求 查找匹配该url的 Handler，并返回一个执行链
+    DispatcherServlet 再请求 处理器适配器(HandlerAdapter) 调用相应的 Handler 进行处理并返回 ModelAndView 给 DispatcherServlet
+    DispatcherServlet 将 ModelAndView 请求 ViewReslover（视图解析器）解析，返回具体 View
+    DispatcherServlet 对 View 进行渲染视图（即将模型数据填充至视图中）
+    DispatcherServlet 将页面响应给用户
+
+101.spring mvc 有哪些组件？
+    1）HandlerMapping 处理器映射器
+        通过处理器映射，可以将web请求映射到正确的处理器Controller上，当接收到请求时，DispatcherServlet将请求交给HandlerMapping处理器映射，
+        让它检查请求并找到一个合适（Controller类）HadnlerExecutionChain，这个HadnlerExecutionChain包含一个能处理该请求的处理器Controller。
+        默认情况下，如果没有在上下文中找到处理器映射，DispatcherServlet会为你创建一个BeanNameUrlHandlerMapping。
+    2）Controller 处理器
+        处理请求。
+    3）ViewResolver 试图解析器
+        解析返回的ModelAndView，选择一个合适的ViewResolver（必须是已经注册到Spring容器中的ViewResolver）返回给DispatcherServlet。
+        ViewResolver结合Model和View，来渲染试图，将渲染结果返回给客户端。
+
+102.@RequestMapping 的作用是什么？
+    url和Controller方法之间的映射。
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>spring boot<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+SpringBoot的优缺点？为什么使用它？工作原理？
+
+SpringBoot中什么是profile？如何启用不同的profile？如何定义多套不同环境配置？
+
+SpringBoot中EnableXxx注解是如何工作的
+
+如何理解 Spring Boot 中的 Starters？
+
+SpringBoot 实现热部署有哪几种方式？
+
+如何理解 Spring Boot 配置加载顺序？
+Spring Boot常用的注解
+spring boot特性，优势，适用场景等
+104.什么是 spring boot？
+
+105.为什么要用 spring boot？
+
+106.spring boot 核心配置文件是什么？
+
+107.spring boot 配置文件有哪几种类型？它们有什么区别？
+
+108.spring boot 有哪些方式可以实现热部署？
+springboot启动机制。
+50，SpringBoot的优点？
+    答：
+    快速构建项目，极大的提高了开发、部署效率。
+    对主流开发框架的无配置集成。
+    项目可独立运行，无须外部依赖Servlet容器。
+    提供运行时的应用监控。
+
+    简化编码：创建一个web项目时，使用spring时，需要在pom中添加多个依赖。而spring boot简化了依赖，只需要添加starter-web依赖即可。
+    简化配置：spring的xml很繁琐，spring boot合并了一些注解。
+    简化部署：spring时，要将项目打成war包扔到tomcat里；使用spring boot时，不去要部署tomcat，因为spring boot内嵌了tomcat，只需要将项目打成jar包，使用java -jar xxx.jar一键式启动项目。
+    提供运行时监控：可以引入 spring-boot-start-actuator 依赖。直接使用rest方式来获取进程的运行期性能参数。
+Spring、Springboot中如何做单元测试？
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>spring cloud<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+什么是Spring Cloud？SpringCloud 的优缺点？
+什么是Hystrix
+Spring Cloud用到什么东西？
+
+110.什么是 spring cloud？
+
+111.spring cloud 断路器的作用是什么？
+
+112.spring cloud 的核心组件有哪些？
+Spring Cloud的各个项目基于Spring Boot，将Netflix的多个框架进行封装，通过自动配置的方式将这些框架绑定到Spring环境中。
+Eureka：基于REST服务的分布式中间件，主要用于服务管理（发现）。
+Hystrix：容错框架，通过添加延迟阈值以及容错的逻辑，帮助我们控制分布式系统间组件的交互。
+Feign：一个REST客户端，目的是为了简化Web Service客户端的开发。
+Ribbon：负载均衡框架，在微服务集群中为各个客户端的通信提供支持，它只要实现中间层应用程序的负载均衡。
+Zull：为微服务集群提供代理、过滤、路由等功能。
+其他模块：
+Spring Cloud Config：为分布式系统提供了配置服务器和配置客户端，通过对他们的配置，可以很好的管理集群中的配置文件。
+Spring Cloud Sleuth：服务跟踪框架，可以与Zipkin、Apache HTrace和ELK等数据分析、服务跟踪系统进行整合，为服务跟踪、解决问题提供了便利。
+Spring Cloud Strean：用于构建消息驱动微服务的框架，在Spring Boot的基础上，整合了Spring Integration来连接消息代理中间件。
+Spring Cloud Bus：连接RabbitMQ、Kafka等消息代理的集群消息总线。
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hibernate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+109.jpa 和 hibernate 有什么区别？
+
+113.为什么要使用 hibernate？
+
+114.什么是 ORM 框架？
+
+115.hibernate 中如何在控制台查看打印的 sql 语句？
+
+116.hibernate 有几种查询方式？
+
+117.hibernate 实体类可以被定义为 final 吗？
+
+118.在 hibernate 中使用 Integer 和 int 做映射有什么区别？
+
+119.hibernate 是如何工作的？
+
+120.get()和 load()的区别？
+
+121.说一下 hibernate 的缓存机制？
+
+122.hibernate 对象有哪些状态？
+
+123.在 hibernate 中 getCurrentSession 和 openSession 的区别是什么？
+
+124.hibernate 实体类必须要有无参构造函数吗？为什么？
+11.Hibernate的缓存？各有什么作用？
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> mybatis <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+什么是ORM？如何写一个orm框架
+
+Mybatis的工作机制
+
+Mybatis中如何做分页？
+
+Mybatis中是否支持延迟加载？
+
+Mybatis中有哪些执行器？
+
+Mybatis中如何自定义插件？
+
+Struts1是不是线程安全的？Struts2呢？Hibernate、Mybatis、SpringMVC呢？
+
+125.mybatis 中 #{}和 ${}的区别是什么？
+
+126.mybatis 有几种分页方式？
+
+127.RowBounds 是一次性查询全部结果吗？为什么？
+
+128.mybatis 逻辑分页和物理分页的区别是什么？
+
+129.mybatis 是否支持延迟加载？延迟加载的原理是什么？
+
+130.说一下 mybatis 的一级缓存和二级缓存？
+
+131.mybatis 和 hibernate 的区别有哪些？
+
+132.mybatis 有哪些执行器（Executor）？
+
+133.mybatis 分页插件的实现原理是什么？
+
+134.mybatis 如何编写一个自定义插件？
+61，Spring+MyBatis实现读写分离简述？
+    答：
+    方案一：通过MyBatis配置文件创建读写分离两个DataSource，每个SqlSessionFactoryBean对象的mapperLocations属性制定两个读写数据源的配置文件。将所有读的操作配置在读文件中，所有写的操作配置在写文件中。
+    方案二：通过Spring AOP在业务层实现读写分离，在DAO层调用前定义切面，利用Spring的AbstractRoutingDataSource解决多数据源的问题，实现动态选择数据源
+    方案三：通过Mybatis的Plugin在业务层实现数据库读写分离，在MyBatis创建Statement对象前通过拦截器选择真正的数据源，在拦截器中根据方法名称不同（select、update、insert、delete）选择数据源。
+    方案四：通过spring的AbstractRoutingDataSource和mybatis Plugin拦截器实现非常友好的读写分离，原有代码不需要任何改变。推荐第四种方案
+一级和二级缓存的作用，hibernate或mybatis 中如何使用缓存？
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>kafka<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+152.kafka 可以脱离 zookeeper 单独使用吗？为什么？
+
+153.kafka 有几种数据保留的策略？
+
+154.kafka 同时设置了 7 天和 10G 清除数据，到第五天的时候消息达到了 10G，这个时候 kafka 将如何处理？
+
+155.什么情况会导致 kafka 运行变慢？
+
+156.使用 kafka 集群需要注意什么？
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> zookeeper >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+157.zookeeper 是什么？
+
+158.zookeeper 都有哪些功能？
+
+159.zookeeper 有几种部署模式？
+
+160.zookeeper 怎么保证主从节点的状态同步？
+
+161.集群中为什么要有主节点？
+
+162.集群中有 3 台服务器，其中一个节点宕机，这个时候 zookeeper 还可以使用吗？
+
+163.说一下 zookeeper 的通知机制？
