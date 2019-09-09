@@ -1,20 +1,64 @@
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Spring<<<<<<<<<<<<<<<<<<<<<<<<<<<<,
-对Spring的理解，项目中都用什么？怎么用的？说说对IOC、和AOP的理解及实现原理
-说说Spring AOP， 什么是切面、切点、连接切点、通知方法？
+对Spring的理解，项目中都用什么？怎么用的？
 
 什么是Spring声明式事务，如何配置？
-
+    声明式事务管理式建立在AOP之上的，其本质是对方法前后进行拦截，然后在目标方法开始之前创建或者加入一个事务，在执行完目标方法之后根据执行情况提交或者回滚事务。
+    优点是不需要通过编程的方式管理事务。 
 @Transactional注解一般写在什么位置?如何控制其回滚?
+    1、基于tx和aop名字空间的xml配置文件：
+        <!-- 对数据源进行事务管理 -->
+        <bean id="transactionManager"
+            class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+            <property name="dataSource" ref="dynamicDataSource" />
+        </bean>
+        
+        <!-- 配置哪些方法要加入事务控制 -->
+        <tx:advice id="txAdvice" transaction-manager="transactionManager">
+            <tx:attributes>
+                <!-- 让所有的方法都加入事务管理，为了提高效率，可以把一些查询之类的方法设置为只读的事务 -->
+                <tx:method name="*" propagation="REQUIRED" read-only="true" />
+                <!-- 以下方法都是可能设计修改的方法，就无法设置为只读 -->
+                <tx:method name="add*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+                <tx:method name="insert*" propagation="REQUIRED" />
+                <tx:method name="del*" propagation="REQUIRED" />
+                <tx:method name="update*" propagation="REQUIRED" />
+                <tx:method name="save*" propagation="REQUIRED" />
+                <tx:method name="clear*" propagation="REQUIRED" />
+                <tx:method name="handle*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+            </tx:attributes>
+        </tx:advice>
+        
+        <!-- 配置一个切面 -->
+        <aop:config>
+            <!-- 配置一个切点 -->
+            <aop:pointcut id="allMethods" expression="(execution(* cn.edu.his.pay.service.*.*(..)))" />
+            <aop:advisor advice-ref="txAdvice" pointcut-ref="allMethods" />
+        </aop:config>
+        
+    2、基于@Transactional注解，核心配置如下：
+        <!-- 对数据源进行事务管理 -->
+        <bean id="transactionManager"
+            class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+            <property name="dataSource" ref="dynamicDataSource" />
+        </bean>
+        
+        <!-- 开启事务控制的注解支持 -->
+        <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    总结：二种方式都能有效利用Spring的事务管理机制来管理事务的ACID，这里在项目中要使用那种方式还需要一定的取舍；首先我们来分析第一种，第一种主要是采用Aop+xml的配置，这种方式主要是在xml中配置Aop的切入点（就是service中的方法）和配置哪些方法需要加入事务管理，通常用正则匹配的方式，且核心的配置信息（事务控制）都是配置在xml中；而第二种是Aop+annotation的，这种方式是利用Aop去扫描带@Transactional的注解的方法，并在该方法之前按照注解配置的事务控制规则来进行事务的管理。当业务中出现需要批量的设置方法的事务控制规则的时候推荐使用第一种，反之都选择选择第二种，而第二种是需要在每个需要事务控制的方法上都加入注解，但由于第一种控制的是所有方法，第二种是控制的指定方法，这个时候第一种的开销肯定要比第二种大，还有就是需要了解事务隔离级别，要考虑在指定业务上要怎么能保证数据的ACID，这样才能在代码中更好的设置对应的事务控制规则，还有就是千万不要在同一个项目中使用了带二种方式的事务配置（没意义），它们功能是一样的，使用一种就行。
+
 21，SpringAOP，XML配置<aop:config>，切面<aop:aspect>切点<aop:pointcut>，连接切点和通知方法<aop:before>和<aop:after>等，
     注解可以直接使用@before执行方法@after ，@before(“pointcut()”) ，@after("pointcut")， @Aroud("excutete())，@AfteReturning，@AfterThrowing，
     可作日志事务，权限等待，AOP即通过把具体的类创建对应的 代理类，从代理类来对具体进行操作。                      
     目标实现了接口，默认采用JDK实现AOP，也可以强制使用CGlib来实现AOP，目标没有实现接口的话，则必须采用CGlib，Spring自动在JDK和CGlib切换。
     如果要求spring强制使用CGlib实现AOP，则可以配置，添加Cglib库。。。jar， Spring配置文件中加入<aop:aspecj-autoproxy proxy-target-Class=true>                                                                                                                                                                                   
 
-70.spring mvc 和 struts 的区别是什么？
+70.spring mvc 和 struts 的区别是什么？ 
     struts2是基于类的拦截。每次处理一个请求，struts就会实例化一个对象，这样就不会有线程安全的问题了。
-    spring mvc是方法级别的拦截，一个方法对应一个Request上下文，所以方法基本上是独立的，独享request，response数据。而每个方法同时又和一个url对应，参数的传递是直接注入到方法中的，是方法所独有的。
-    处理结果通过ModelMap返回给框架。Spring的controller默认是Singleton的，这意味着每一个request过来，系统都会用原有的instance去处理。
+    spring mvc是方法级别的拦截，一个方法对应一个Request上下文，所以方法基本上是独立的，独享request，response数据。
+    而每个方法同时又和一个url对应，参数的传递是直接注入到方法中的，是方法所独有的。
+    处理结果通过ModelMap返回给框架。Spring的controller默认是Singleton的，这意味着每一个request过来，
+    系统都会用原有的instance去处理。
 
     为应对线程安全问题，尽量避免在controller中定义实例变量。如果非要用到实例变量：
     1）在controller中使用ThreadLocal变量
@@ -22,12 +66,14 @@
     3）不修改变量，只调用方法就不会有线程安全问题。比如注入service，虽然service并不是线程安全的，但是只会调用service中的方法。
 
 90.为什么要使用 spring？
-    1、spring是个大工厂，可以将所有对象创建和依赖关系维护，交给spring管理。不用手动创建对象。
+    spring是个大工厂，可以将所有对象创建和依赖关系维护，交给spring管理。不用手动创建对象。
     通过代码解耦，提高代码灵活性（依赖注入 DI）
     简化开发，用最少的代码，做最多的事情（AOP，Template）
     提供公共抽象，屏蔽底层，开箱即用，替换方便（Spring Cache，框架，中间件集成）
     MVC模型的快速实现（视图解析，数据转换）
+
 91.解释一下什么是 aop？
+    切面、切点、连接切点、通知方法
     Spring Aop是使用动态代理来实现的。基于JDK的动态代理和基于Cglib的代理。
     aop是面向切面编程。通过动态代理实现程序功能的统一维护。
     好处：
@@ -150,7 +196,6 @@
 97.spring 自动装配 bean 有哪些方式？
     @Resource
     @Autowired
-98.spring 事务实现方式有哪些？
 
 99.说一下 spring 的事务隔离？
     定义了五种表示事务隔离界别的常量：
@@ -179,13 +224,19 @@
     ThreadLocal为每个线程创建了一个副本。
     Spring使用ThreadLocal解决线程安全问题，只有无状态的Bean才可以在多线程环境下共享，在Spring中，绝大多数Bean都可以
     声明为singleton作用域。Spring通过ThreadLocal解决Bean的线程安全问题。
+
 讲讲Spring加载流程。
+https://blog.csdn.net/wzk646795873/article/details/79764870
 Spring如何管理事务的。
+
 Spring怎么配置事务（具体说出一些关键的xml 元素）。
+
 说说你对Spring的理解，非单例注入的原理？它的生命周期？循环注入的原理，aop的实现原理，说说aop中的几个术语，它们是怎么相互工作的。
-Spring加载过程？
+
 自己有没有写过类似Spring这样的AOP事务？
+
 Spring AOP IOC的实现原理，底层用什么实现的？
+
 spring框架中需要引用哪些jar包，以及这些jar包的用途
 1）spring-core.jar：包含spring框架基本的核心工具类，其他组件都要使用这个包里面的类，是其他组件的核心；
   2）spring-bean.jar：是所有的应用都要用到的，包含访问配置文件、创建和管理bean以及进行IoC和DI操作所需的相关类；
