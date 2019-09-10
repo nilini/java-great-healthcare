@@ -1,5 +1,6 @@
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Spring<<<<<<<<<<<<<<<<<<<<<<<<<<<<,
 对Spring的理解，项目中都用什么？怎么用的？
+    用到了spring的aop
 
 什么是Spring声明式事务，如何配置？
     声明式事务管理式建立在AOP之上的，其本质是对方法前后进行拦截，然后在目标方法开始之前创建或者加入一个事务，在执行完目标方法之后根据执行情况提交或者回滚事务。
@@ -226,10 +227,21 @@
     声明为singleton作用域。Spring通过ThreadLocal解决Bean的线程安全问题。
 
 讲讲Spring加载流程。
-https://blog.csdn.net/wzk646795873/article/details/79764870
-Spring如何管理事务的。
-
-Spring怎么配置事务（具体说出一些关键的xml 元素）。
+    Spring核心组件：
+        Core、Context、Beans三个。
+        Core：
+            包含了很多关键类，其中一个重要组成部分就是定义了资源的访问方式，把所有资源都抽象成一个接口。
+            对于资源使用者来说，不需要考虑文件的类型。对资源提供者来说，也不需要考虑如何将资源包装起来交给别人使用。
+        Context：
+            Context组件的作用是给Spring提供一个运行时的环境，用以保存各个对象的状态。
+            ApplicationContext 是 Context 的顶级父类，他除了能标识一个应用环境的基本信息外，他还继承了五个接口，这五个接口主要是扩展了 Context 的功能。
+        Bean：
+            Bean组件在Spring的org.springframework.beans包下，主要完成了Bean的创建、定义以及Bean的解析。
+            SpringBean的创建是典型的工厂模式，最终默认实现类是DefaultListableBeanFactory，实现了所有的接口。
+            Bean的定义主要在BeanDefinition描述，其完整的描述了在Spring配置文件中定义的<bean/>节点的所有信息，包括子节点。
+            当一个<Bean/>节点被成功解析之后，在Spring内部会被转化成一个BeanDefinition对象，接下来的所有操作都是对这个对象进行的。
+            Bean的解析主要是对Spring配置文件的解析。
+    https://blog.csdn.net/wzk646795873/article/details/79764870
 
 说说你对Spring的理解，非单例注入的原理？它的生命周期？循环注入的原理，aop的实现原理，说说aop中的几个术语，它们是怎么相互工作的。
 
@@ -251,20 +263,44 @@ spring框架中需要引用哪些jar包，以及这些jar包的用途
   11）spring-web.jar：包含web开发时，用到spring框架时所需的核心类；
   12）spring-webmvc.jar：baohan Spring MVC框架相关的所有类；
   13）spring-mock.jar：包含spring一整套mock类来辅助应用的测试。
+
 spring中beanFactory和ApplicationContext的联系和区别
-spring注入的几种方式
-spring如何实现事物管理的
-Spring是如何实现事务的
+    Spring容器最基本的接口就是BeanFactory。BeanFactory负责配置、创建、管理Bean，它有一个子接口ApplicationContext，也被称为Spring上下文，容器同时还管理着Bean和Bean之间的依赖关系。
+    ApplicationContext除了提供上述BeanFactory所提供的功能之外，还提供了更完整的其他功能：
+        a、国际化支持 
+        b、资源访问 Resource rs = ctx. getResource(“classpath:config.properties”),
+        c、事件传递
+
 spring加载bean的流程？
+    1）获取配置文件
+        ClassPathResource res = new ClassPathResource("applicationContext.xml");
+        加载XML文件，封装成Resource对象
+    2）解析配置文件并注册Bean
+        XmlBeanFactory bf = new XmlBeanFactory(res);
+        将applicationContext.xml配置的Bean信息构成BeanDefinition对象，然后放到Factory的map中（注册）。
+    3）实例化Bean
+        MyBean bean = (MyBean)bf.getBean("myBean");
+        基本原理是利用反射机制，通过bean的class属性创建一个bean的实例。
+    4）调用对象的方法
+
 spring的事务怎么使用？事务回滚？自定义异常？
+
 spring中循环注入的方式
+
 5.Spring的一些机制理解？IOc？AOP？IOc如何实现依赖注入的？Spring动态代理的实现方式？
+
 Spring的beanFactory和factoryBean的区别
+
 Spring的事务隔离级别，实现原理
+
 对Spring的理解，非单例注入的原理？它的生命周期？循环注入的原理，aop的实现原理，说说aop中的几个术语，它们是怎么相互工作的？
+
 拦截器和Intercepter？
+
 Spring中常用注解？
+
 Spring中如果一个注入一个对象，但是这个对象有多个实例，怎么处理？
+
 2、什么是基于注解的切面实现
     1) 什么是AOP？
     在程序运行时，动态的将代码切入到类的指定方法、指定位置上的编程思想就是面向切面编程。
@@ -296,24 +332,62 @@ Spring如何解决循环依赖？
     2）setter循环依赖：
         表示通过setter注入方式构成的循环依赖。
         https://www.cnblogs.com/mxmbk/articles/5371676.html
+
 6、Spring AOP中代理选择
     1) 如果目标对象实现了接口，默认情况下会采用JDK的动态代理实现AOP。
     2) 如果目标对象实现了接口，也是可以强制使用cglib实现AOP。
     3) 如果目标对象没有实现接口，则会使用cglib。
     通过@EnableAspectJAutoProxy(proxyTargetClass = true)
+
 8、Spring AOP用到了动态代理；
    Spring 事务管理用到了动态代理；
    MyBatis数据库连接池用到了动态代理；
    MyBatis创建Mapper用到了动态代理。
 
-21、Spring怎样解决循环依赖的问题
-
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>spring mvc<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<,,
-SpringMVC常用的注解，RequestBody，ResponseBody ，RequestParam，PathVariables，RestController，ControllerAdvice， WebInitParam，InitBinder
-SpringMVC如何做类型转换？
-SpringMVC如何做参数校验？
-srpingMVC的原理
-springMVC注解的意思
+1、SpringMVC常用的注解，RequestBody，ResponseBody ，RequestParam，PathVariables，RestController，ControllerAdvice， WebInitParam，InitBinder
+
+2、SpringMVC如何做类型转换？
+    Converter可以将一种类型转换为另一种类型。例如，将String转换成Date，或者将Long转化成Date。
+    步骤：
+        1）实现 Converter 接口
+            public class DateConverter implements Converter<String, Date> {
+                /**
+                * 将 yyyy-MM-dd 格式的字符串转换成日期对象
+                */
+                @Override
+                public Date convert(String dateStr) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    Date date = null;
+                    try {
+                        date = sdf.parse(dateStr);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    return date;
+                }
+            }
+        2）Spring MVC的配置文件中配置一个ConversionServiceFactoryBean
+            <!--开启mvc注解驱动  -->
+            <mvc:annotation-driven conversion-service="conversionService" />
+            <!-- 注册自定义的类型转换器 -->
+            <bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+                <property name="converters">
+                    <list>
+                        <bean class="com.qjl.pems.converter.DateConverter"></bean>
+                    </list>
+                </property>
+            </bean>
+    spring boot中直接使用@Component修饰自定义的转换类。
+
+3、SpringMVC如何做参数校验？
+        @Valid 
+            是使用hibernate validation 校验使用。hibernate-validator实现了jsr 303规范。
+        @Validated 
+            是只用Spring Validator 校验使用。
+        https://www.cnblogs.com/myinspire/articles/7649027.html
+4、srpingMVC的原理
+5、springMVC注解的意思
 34，SpirngMVC的生命周期 和 SpringBean的生命周期
     SpirngMVC的生命周期 ：
     A，DispatcherSerlvet（前端控制器）
@@ -354,6 +428,217 @@ Springmvc 中DispatcherServlet初始化过程。
 
 102.@RequestMapping 的作用是什么？
     url和Controller方法之间的映射。
+1、什么是Spring MVC ？简单介绍下你对springMVC的理解?
+
+Spring MVC是一个基于Java的实现了MVC设计模式的请求驱动类型的轻量级Web框架，通过把Model，View，Controller分离，将web层进行职责解耦，把复杂的web应用分成逻辑清晰的几部分，简化开发，减少出错，方便组内开发人员之间的配合。
+
+2、SpringMVC的流程？
+
+（1）用户发送请求至前端控制器DispatcherServlet；
+（2） DispatcherServlet收到请求后，调用HandlerMapping处理器映射器，请求获取Handle；
+（3）处理器映射器根据请求url找到具体的处理器，生成处理器对象及处理器拦截器(如果有则生成)一并返回给DispatcherServlet；
+（4）DispatcherServlet 调用 HandlerAdapter处理器适配器；
+（5）HandlerAdapter 经过适配调用 具体处理器(Handler，也叫后端控制器)；
+（6）Handler执行完成返回ModelAndView；
+（7）HandlerAdapter将Handler执行结果ModelAndView返回给DispatcherServlet；
+（8）DispatcherServlet将ModelAndView传给ViewResolver视图解析器进行解析；
+（9）ViewResolver解析后返回具体View；
+（10）DispatcherServlet对View进行渲染视图（即将模型数据填充至视图中）
+（11）DispatcherServlet响应用户。
+
+
+
+3、Springmvc的优点:
+
+（1）可以支持各种视图技术,而不仅仅局限于JSP；
+（2）与Spring框架集成（如IoC容器、AOP等）；
+（3）清晰的角色分配：前端控制器(dispatcherServlet) , 请求到处理器映射（handlerMapping), 处理器适配器（HandlerAdapter), 视图解析器（ViewResolver）。
+（4）支持各种请求资源的映射策略。
+
+ 
+
+4、Spring MVC的主要组件？
+
+（1）前端控制器 DispatcherServlet（不需要程序员开发）
+
+作用：接收请求、响应结果，相当于转发器，有了DispatcherServlet 就减少了其它组件之间的耦合度。
+
+（2）处理器映射器HandlerMapping（不需要程序员开发）
+
+作用：根据请求的URL来查找Handler
+
+（3）处理器适配器HandlerAdapter
+
+注意：在编写Handler的时候要按照HandlerAdapter要求的规则去编写，这样适配器HandlerAdapter才可以正确的去执行Handler。
+
+（4）处理器Handler（需要程序员开发）
+
+（5）视图解析器 ViewResolver（不需要程序员开发）
+
+作用：进行视图的解析，根据视图逻辑名解析成真正的视图（view）
+
+（6）视图View（需要程序员开发jsp）
+
+View是一个接口， 它的实现类支持不同的视图类型（jsp，freemarker，pdf等等）
+
+ 
+
+5、springMVC和struts2的区别有哪些?
+
+（1）springmvc的入口是一个servlet即前端控制器（DispatchServlet），而struts2入口是一个filter过虑器（StrutsPrepareAndExecuteFilter）。
+
+（2）springmvc是基于方法开发(一个url对应一个方法)，请求参数传递到方法的形参，可以设计为单例或多例(建议单例)，
+     struts2是基于类开发，传递参数是通过类的属性，只能设计为多例。
+
+（3）Struts采用值栈存储请求和响应的数据，通过OGNL存取数据，
+     springmvc通过参数解析器是将request请求内容解析，并给方法形参赋值，将数据和视图封装成ModelAndView对象，最后又将ModelAndView中的模型数据通过reques域传输到页面。Jsp视图解析器默认使用jstl。
+
+ 
+
+6、SpringMVC怎么样设定重定向和转发的？
+
+（1）转发：在返回值前面加"forward:"，譬如"forward:user.do?name=method4"
+
+（2）重定向：在返回值前面加"redirect:"，譬如"redirect:http://www.baidu.com"
+
+ 
+
+7、SpringMvc怎么和AJAX相互调用的？
+
+通过Jackson框架就可以把Java里面的对象直接转化成Js可以识别的Json对象。具体步骤如下 ：
+
+（1）加入Jackson.jar
+
+（2）在配置文件中配置json的映射
+
+（3）在接受Ajax方法里面可以直接返回Object,List等,但方法前面要加上@ResponseBody注解。
+
+ 
+
+8、如何解决POST请求中文乱码问题，GET的又如何处理呢？
+
+（1）解决post请求乱码问题：
+
+在web.xml中配置一个CharacterEncodingFilter过滤器，设置成utf-8；
+
+<filter>
+
+    <filter-name>CharacterEncodingFilter</filter-name>
+
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+
+    <init-param>
+
+        <param-name>encoding</param-name>
+
+        <param-value>utf-8</param-value>
+
+    </init-param>
+
+</filter>
+
+<filter-mapping>
+
+    <filter-name>CharacterEncodingFilter</filter-name>
+
+    <url-pattern>/*</url-pattern>
+
+</filter-mapping>
+
+（2）get请求中文参数出现乱码解决方法有两个：
+
+①修改tomcat配置文件添加编码与工程编码一致，如下：
+
+<ConnectorURIEncoding="utf-8" connectionTimeout="20000" port="8080" protocol="HTTP/1.1" redirectPort="8443"/>
+
+ ②另外一种方法对参数进行重新编码：
+
+String userName = new String(request.getParamter("userName").getBytes("ISO8859-1"),"utf-8")
+
+ISO8859-1是tomcat默认编码，需要将tomcat编码后的内容按utf-8编码。
+
+ 
+
+9、Spring MVC的异常处理 ？
+
+答：可以将异常抛给Spring框架，由Spring框架来处理；我们只需要配置简单的异常处理器，在异常处理器中添视图页面即可。
+
+10、SpringMvc的控制器是不是单例模式,如果是,有什么问题,怎么解决？
+
+答：默认是单例模式,所以在多线程访问的时候有线程安全问题,不要用同步,会影响性能的,解决方案是在控制器里面不能写字段。
+
+11、 SpringMVC常用的注解有哪些？
+
+@RequestMapping：用于处理请求 url 映射的注解，可用于类或方法上。用于类上，则表示类中的所有响应请求的方法都是以该地址作为父路径。
+
+@RequestBody：注解实现接收http请求的json数据，将json转换为java对象。
+
+@ResponseBody：注解实现将conreoller方法返回对象转化为json对象响应给客户。
+
+12、SpingMvc中的控制器的注解一般用那个,有没有别的注解可以替代？
+
+答：一般用@Conntroller注解,表示是表现层,不能用别的注解代替。
+
+13、如果在拦截请求中，我想拦截get方式提交的方法,怎么配置？
+
+答：可以在@RequestMapping注解里面加上method=RequestMethod.GET。
+
+14、怎样在方法里面得到Request,或者Session？
+
+答：直接在方法的形参中声明request,SpringMvc就自动把request对象传入。
+
+15、如果想在拦截的方法里面得到从前台传入的参数,怎么得到？
+
+答：直接在形参里面声明这个参数就可以,但必须名字和传过来的参数一样。
+
+16、如果前台有很多个参数传入,并且这些参数都是一个对象的,那么怎么样快速得到这个对象？
+
+答：直接在方法中声明这个对象,SpringMvc就自动会把属性赋值到这个对象里面。
+
+17、SpringMvc中函数的返回值是什么？
+
+答：返回值可以有很多类型,有String, ModelAndView。ModelAndView类把视图和数据都合并的一起的，但一般用String比较好。
+
+18、SpringMvc用什么对象从后台向前台传递数据的？
+
+答：通过ModelMap对象,可以在这个对象里面调用put方法,把对象加到里面,前台就可以通过el表达式拿到。
+
+19、怎么样把ModelMap里面的数据放入Session里面？
+
+答：可以在类上面加上@SessionAttributes注解,里面包含的字符串就是要放入session里面的key。
+
+ 
+
+20、SpringMvc里面拦截器是怎么写的：
+
+有两种写法,一种是实现HandlerInterceptor接口，另外一种是继承适配器类，接着在接口方法当中，实现处理逻辑；然后在SpringMvc的配置文件中配置拦截器即可：
+
+  <!-- 配置SpringMvc的拦截器 -->
+ 
+<mvc:interceptors>
+ 
+    <!-- 配置一个拦截器的Bean就可以了 默认是对所有请求都拦截 -->
+ 
+    <bean id="myInterceptor" class="com.zwp.action.MyHandlerInterceptor"></bean>
+ 
+    <!-- 只针对部分请求拦截 -->
+ 
+    <mvc:interceptor>
+ 
+       <mvc:mapping path="/modelMap.do" />
+ 
+       <bean class="com.zwp.action.MyHandlerInterceptorAdapter" />
+ 
+    </mvc:interceptor>
+ 
+</mvc:interceptors>
+ 
+
+21、注解原理：
+    注解本质是一个继承了Annotation的特殊接口，其具体实现类是Java运行时生成的动态代理类。
+    我们通过反射获取注解时，返回的是Java运行时生成的动态代理对象。
+    通过代理对象调用自定义注解的方法，会最终调用AnnotationInvocationHandler的invoke方法。
+    该方法会从memberValues这个Map中索引出对应的值。而memberValues的来源是Java常量池。
 
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>spring boot<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -417,6 +702,7 @@ Spring Cloud Bus：连接RabbitMQ、Kafka等消息代理的集群消息总线。
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hibernate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 109.jpa 和 hibernate 有什么区别？
+    hibernate orm是jpa规范的一个实现。
 
 113.为什么要使用 hibernate？
 
@@ -445,45 +731,288 @@ Spring Cloud Bus：连接RabbitMQ、Kafka等消息代理的集群消息总线。
 
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> mybatis <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 什么是ORM？如何写一个orm框架
+    ORM：Object Relational Mapping。
+    对象和数据库的映射。
 
 Mybatis的工作机制
+    1）读取MyBatis配置文件：mybatis-config.xml为mybatis的全局配置文件，配置了mybatis的运行环境等信息，例如数据库连接信息。
+    2）加载映射文件。即sql映射文件，需要在mybatis-config.xml中加载，mybatis-config.xml可以配置多个映射文件，每个文件对相应数据库中的一张表。
+    3）构造会话工厂：通过mybatis的环境等配置信息构建会话工厂SqlSessionFactory。
+    4）创建会话对象：由会话工厂创建SqlSession对象，该对象中包含了执行sql语句的所有方法。
+    5）Executor 执行器：MyBatis 底层定义了一个 Executor 接口来操作数据库，它将根据 SqlSession 传递的参数动态地生成需要执行的 SQL 语句，同时负责查询缓存的维护。
+    6）MappedStatement 对象：在 Executor 接口的执行方法中有一个 MappedStatement 类型的参数，该参数是对映射信息的封装，用于存储要映射的 SQL 语句的 id、参数等信息。
+    7）输入参数映射：输入参数类型可以是 Map、List 等集合类型，也可以是基本数据类型和 POJO 类型。输入参数映射过程类似于 JDBC 对 preparedStatement 对象设置参数的过程。
+    8）输出结果映射：输出结果类型可以是 Map、 List 等集合类型，也可以是基本数据类型和 POJO 类型。输出结果映射过程类似于 JDBC 对结果集的解析过程。
 
 Mybatis中如何做分页？
+    1）查询所有数据，然后数组中分页
+    2）sql分页
+        mybatis接口
+        List<Student> queryStudentsBySql(Map<String,Object> data);
+        
+        xml文件
+        <select id="queryStudentsBySql" parameterType="map" resultMap="studentmapper">
+                select * from student limit #{currIndex} , #{pageSize}
+        </select>
+        service
 
-Mybatis中是否支持延迟加载？
+        接口
+        List<Student> queryStudentsBySql(int currPage, int pageSize);
+        实现类
+        public List<Student> queryStudentsBySql(int currPage, int pageSize) {
+            Map<String, Object> data = new HashedMap();
+            data.put("currIndex", (currPage-1)*pageSize);
+            data.put("pageSize", pageSize);
+            return studentMapper.queryStudentsBySql(data);
+        }
+    3）拦截器
 
-Mybatis中有哪些执行器？
 
 Mybatis中如何自定义插件？
+    Mybatis允许在已映射语句执行过程中的某一点进行拦截调用。允许拦截的方法调用：
+    Executor (update, query, flushStatements, commit, rollback, getTransaction, close, isClosed)
+    ParameterHandler (getParameterObject, setParameters)
+    ResultSetHandler (handleResultSets, handleOutputParameters)
+    StatementHandler (prepare, parameterize, batch, update, query)
+    
+    拦截执行器的方法。
+    拦截参数的处理。
+    拦截结果集的处理。
+    拦截sql语法构建的处理。
 
-Struts1是不是线程安全的？Struts2呢？Hibernate、Mybatis、SpringMVC呢？
+    Executor是 Mybatis的内部执行器，它负责调用StatementHandler操作数据库，并把结果集通过 ResultSetHandler进行自动映射，另外，他还处理了二级缓存的操作。从这里可以看出，我们也是可以通过插件来实现自定义的二级缓存的。
+    StatementHandler是Mybatis直接和数据库执行sql脚本的对象。另外它也实现了Mybatis的一级缓存。这里，我们可以使用插件来实现对一级缓存的操作(禁用等等)。
+    ParameterHandler是Mybatis实现Sql入参设置的对象。插件可以改变我们Sql的参数默认设置。
+    ResultSetHandler是Mybatis把ResultSet集合映射成POJO的接口对象。我们可以定义插件对Mybatis的结果集自动映射进行修改。
+    
+    mybatis是通过动态代理的方式实现拦截的。
+
+    开发：
+    1）实现Interceptor接口
+        三个方法：
+        setProperties方法是在Mybatis进行配置插件的时候可以配置自定义相关属性，即：接口实现对象的参数配置
+        plugin方法是插件用于封装目标对象的，通过该方法我们可以返回目标对象本身，也可以返回一个它的代理，可以决定是否要进行拦截进而决定要返回一个什么样的目标对象，官方提供了示例：return Plugin.wrap(target, this);
+        intercept方法就是要进行拦截的时候要执行的方法
+    
+    2）注解
+        @Intercepts({@Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class})})
+    
+    3）官方示例
+        @Intercepts({@Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class})})
+        public class TestInterceptor implements Interceptor {
+            public Object intercept(Invocation invocation) throws Throwable {
+                Object target = invocation.getTarget(); //被代理对象
+                Method method = invocation.getMethod(); //代理方法
+                Object[] args = invocation.getArgs(); //方法参数
+                // do something ...... 方法拦截前执行代码块
+                Object result = invocation.proceed();
+                // do something .......方法拦截后执行代码块
+                return result;
+            }
+            public Object plugin(Object target) {
+                return Plugin.wrap(target, this);
+            }
+        }
+    https://www.jianshu.com/p/7c7b8c2c985d
+
+Mybatis、SpringMVC线程安全？
+    mybatis:
+        ThreadLocal实现将获取的SqlSession与SqlSessionFactory绑定并且关联到当前线程
 
 125.mybatis 中 #{}和 ${}的区别是什么？
-
-126.mybatis 有几种分页方式？
+   ${}是Properties文件中的变量占位符，它可以用于标签属性值和sql内部，属于静态文本替换，比如${driver}会被静态替换为com.mysql.jdbc.Driver。
+   #{}是sql的参数占位符，Mybatis会将sql中的#{}替换为?号，在sql执行前会使用PreparedStatement的参数设置方法，按序给sql的?号占位符设置参数值，比如ps.setInt(0, parameterValue)，#{item.name}的取值方式为使用反射从参数对象中获取item对象的name属性值，相当于param.getItem().getName()。
+   mybatis中如果以${}形式声明为SQL传递参数，mybatis将不会进行参数预处理，会直接动态拼接SQL语句，此时就会存在被注入的风险，所以在使用mybatis作为持久框架时应尽量避免采用${}的形式进行参数传递，如果无法避免（有些SQL如like、in、order by等，程序员可能依旧会选择${}的方式传参），那就需要对传入参数自行进行转义过滤。
+   jdbc提供了PreparedStatement（预处理执行语句）的方式，可以对查询参数转义。
 
 127.RowBounds 是一次性查询全部结果吗？为什么？
+    RowBounds是mybatis提供的分页类，一次性查询全部结果，然后出部分。
+    用法：
+        给接口增加一个RowBounds参数。
+        List<Student> findStudentByRowBounds(@Param("name") String name, RowBounds rowBounds)
+        
+        sql映射文件，就按普通的配置，不用limit，mybatis会自动识别RowBounds，并根据传递的RowBounds参数进行分页。
+        
+        传参调用：List<Student> list = findStudentByRowBounds("", new RowBounds(1,1))
 
 128.mybatis 逻辑分页和物理分页的区别是什么？
-
+        使用RowBounds对象进行逻辑分页，它是针对ResultSet结果集执行的内存分页。
+        使用pageHelper插件进行物理分页。
+            @RequestMapping("/emps")  
+            public String list(@RequestParam(required = false,defaultValue = "1",value = "pageNum")Integer pageNum, Map<String,Object> map){  
+                //引入分页查询，使用PageHelper分页功能  
+                //在查询之前传入当前页，然后多少记录  
+                PageHelper.startPage(pageNum,5);  
+                //startPage后紧跟的这个查询就是分页查询  
+                List<Employee> emps = employeeService.getAll();  
+                //使用PageInfo包装查询结果，只需要将pageInfo交给页面就可以  
+                PageInfo pageInfo = new PageInfo<>(emps);  
+                //pageINfo封装了分页的详细信息，也可以指定连续显示的页数  
+                map.put("pageInfo",pageInfo);  
+                return "list";  
+            }  
 129.mybatis 是否支持延迟加载？延迟加载的原理是什么？
+    延迟加载：先从单表查询，需要时再从关联表去关联查询。
+    原理：使用cglib创建目标对象的代理对象，当调用目标方法时，进入拦截器方法，比如调用a.getB().getName()，拦截器invoke()方法发现a.getB()是null值，
+          那么就会单独发送事先保存好的查询关联B对象的sql，把B查询出来，然后调用a.setB(b)。
+    Mybatis仅支持association关联对象和collection关联集合对象的延迟加载，association指的就是一对一，collection指的就是一对多查询。
+    在Mybatis配置文件中，可以配置是否启用延迟加载lazyLoadingEnabled=true|false。
 
 130.说一下 mybatis 的一级缓存和二级缓存？
+    一级缓存是SqlSession级别，二级缓存是namespace级别。
+    二级缓存缺陷：
+        mybatis在多表查询时，极大可能会出现脏数据。
+        例如：UserMapper.xml中有大多数针对user表的操作，但是在一个XXXMapper.xml中，还有针对user单表的操作。
+            这会导致user在两个命名空间下的数据不一致，如果在UserMapper.xml中做了刷新缓存的操作，
+            在XXXMapper.xml中缓存仍然有效，如果有针对user的单表查询，使用缓存的结果可能会不正确。
 
 131.mybatis 和 hibernate 的区别有哪些？
+    hirbernate全自动化，不用手写sql；mybatis半自动化，sql需要手工完成。
+    hirbernate提供了良好的缓存机制；mybatis本身提供的缓存机制不佳。
+    hirbernate方便数据库移植；mybatis移植性不好，不同的数据库要写不同的sql。
 
 132.mybatis 有哪些执行器（Executor）？
+    三种基本的Executor执行器：SimpleExecutor、ReuseExecutor、BatchExecutor
+    SimpleExecutor：每执行一次update或select，就开启一个Statement对象，用完立刻关闭Statement对象。
+    ReuseExecutor：执行update或select，以sql作为key查找Statement对象，存在就是用，不存在就创建，
+                   用完后，不关闭Statement对象，而是放置于Map内，供下一次使用。重复使用Statement对象。
+    BatchExecutor：执行update，将所有sql都添加到批处理中（addBatch()）,等待统一执行（executeBatch()），
+                   它缓存了多个Statement对象，每个Statement对象都是addBatch()完毕后，等待逐一执行executeBatch()批处理。
+                   其底层会调用Statement的executeBatch()方法实现批量操作。
+    Exexutor这些特点都严格限制在SqlSession生命周期范围内。
 
-133.mybatis 分页插件的实现原理是什么？
+    Mybatis默认的Executor是SimpleExecutor。
+    全局配置设置Executor：<setting name="defaultExecutorType" value="SIMPLE"/>
 
-134.mybatis 如何编写一个自定义插件？
 61，Spring+MyBatis实现读写分离简述？
     答：
     方案一：通过MyBatis配置文件创建读写分离两个DataSource，每个SqlSessionFactoryBean对象的mapperLocations属性制定两个读写数据源的配置文件。将所有读的操作配置在读文件中，所有写的操作配置在写文件中。
     方案二：通过Spring AOP在业务层实现读写分离，在DAO层调用前定义切面，利用Spring的AbstractRoutingDataSource解决多数据源的问题，实现动态选择数据源
     方案三：通过Mybatis的Plugin在业务层实现数据库读写分离，在MyBatis创建Statement对象前通过拦截器选择真正的数据源，在拦截器中根据方法名称不同（select、update、insert、delete）选择数据源。
     方案四：通过spring的AbstractRoutingDataSource和mybatis Plugin拦截器实现非常友好的读写分离，原有代码不需要任何改变。推荐第四种方案
-一级和二级缓存的作用，hibernate或mybatis 中如何使用缓存？
+
+2、Xml映射文件中，除了常见的select|insert|updae|delete标签之外，还有哪些标签？
+    答：还有很多其他的标签，<resultMap>、<parameterMap>、<sql>、<include>、<selectKey>，加上动态sql的9个标签，trim|where|set|foreach|if|choose|when|otherwise|bind等，其中<sql>为sql片段标签，通过<include>标签引入sql片段，<selectKey>为不支持自增的主键生成策略标签。
+
+3、最佳实践中，通常一个Xml映射文件，都会写一个Dao接口与之对应，请问，这个Dao接口的工作原理是什么？Dao接口里的方法，参数不同时，方法能重载吗？
+    答：Dao接口，就是人们常说的Mapper接口，接口的全限名，就是映射文件中的namespace的值，接口的方法名，
+    就是映射文件中MappedStatement的id值，接口方法内的参数，就是传递给sql的参数。
+
+    Mapper接口是没有实现类的，当调用接口方法时，接口全限名+方法名拼接字符串作为key值，可唯一定位一个MappedStatement，
+    举例：com.mybatis3.mappers.StudentDao.findStudentById，
+    可以唯一找到namespace为com.mybatis3.mappers.StudentDao下面id = findStudentById的MappedStatement。
+    在Mybatis中，每一个<select>、<insert>、<update>、<delete>标签，都会被解析为一个MappedStatement对象。
+
+    Dao接口里的方法，是不能重载的，因为是全限名+方法名的保存和寻找策略。
+
+    Dao接口的工作原理是JDK动态代理，Mybatis运行时会使用JDK动态代理为Dao接口生成代理proxy对象，代理对象proxy会拦截接口方法，
+    转而执行MappedStatement所代表的sql，然后将sql执行结果返回。
+
+5、简述Mybatis的插件运行原理，以及如何编写一个插件。
+    答：Mybatis仅可以编写针对ParameterHandler、ResultSetHandler、StatementHandler、Executor这4种接口的插件，
+        Mybatis使用JDK的动态代理，为需要拦截的接口生成代理对象以实现接口方法拦截功能，每当执行这4种接口对象的方法时，就会进入拦截方法，
+        具体就是InvocationHandler的invoke()方法，当然，只会拦截那些你指定需要拦截的方法。
+        实现Mybatis的Interceptor接口并复写intercept()方法，然后在给插件编写注解，指定要拦截哪一个接口的哪些方法即可，记住，别忘了在配置文件中配置你编写的插件。
+
+6、Mybatis执行批量插入，能返回数据库主键列表吗？
+    答：能，JDBC都能，Mybatis当然也能。
+
+7、Mybatis动态sql是做什么的？都有哪些动态sql？能简述一下动态sql的执行原理不？
+    答：Mybatis动态sql可以让我们在Xml映射文件内，以标签的形式编写动态sql，完成逻辑判断和动态拼接sql的功能，
+       Mybatis提供了9种动态sql标签trim|where|set|foreach|if|choose|when|otherwise|bind。
+       其执行原理为，使用OGNL从sql参数对象中计算表达式的值，根据表达式的值动态拼接sql，以此来完成动态sql的功能。
+
+8、Mybatis是如何将sql执行结果封装为目标对象并返回的？都有哪些映射形式？
+    答：第一种是使用<resultMap>标签，逐一定义列名和对象属性名之间的映射关系。第二种是使用sql列的别名功能，将列别名书写为对象属性名，比如T_NAME AS NAME，对象属性名一般是name，小写，但是列名不区分大小写，Mybatis会忽略列名大小写，智能找到与之对应对象属性名，你甚至可以写成T_NAME AS NaMe，Mybatis一样可以正常工作。
+    有了列名与属性名的映射关系后，Mybatis通过反射创建对象，同时使用反射给对象的属性逐一赋值并返回，那些找不到映射关系的属性，是无法完成赋值的。
+
+9、Mybatis能执行一对一、一对多的关联查询吗？都有哪些实现方式，以及它们之间的区别。
+    答：能，Mybatis不仅可以执行一对一、一对多的关联查询，还可以执行多对一，多对多的关联查询，多对一查询，其实就是一对一查询，只需要把selectOne()修改为selectList()即可；多对多查询，其实就是一对多查询，只需要把selectOne()修改为selectList()即可。
+    关联对象查询，有两种实现方式，一种是单独发送一个sql去查询关联对象，赋给主对象，然后返回主对象。另一种是使用嵌套查询，嵌套查询的含义为使用join查询，一部分列是A对象的属性值，另外一部分列是关联对象B的属性值，好处是只发一个sql查询，就可以把主对象和其关联对象查出来。
+    那么问题来了，join查询出来100条记录，如何确定主对象是5个，而不是100个？其去重复的原理是<resultMap>标签内的<id>子标签，指定了唯一确定一条记录的id列，Mybatis根据<id>列值来完成100条记录的去重复功能，<id>可以有多个，代表了联合主键的语意。
+    同样主对象的关联对象，也是根据这个原理去重复的，尽管一般情况下，只有主对象会有重复记录，关联对象一般不会重复。
+    举例：下面join查询出来6条记录，一、二列是Teacher对象列，第三列为Student对象列，Mybatis去重复处理后，结果为1个老师6个学生，而不是6个老师6个学生。
+
+        t_id    t_name           s_id
+
+    |          1 | teacher      |      38 |
+    |          1 | teacher      |      39 |
+    |          1 | teacher      |      40 |
+    |          1 | teacher      |      41 |
+    |          1 | teacher      |      42 |
+    |          1 | teacher      |      43 |
+
+10、mybatis开发配置
+    mybatis.xml配置文件
+    dao接口文件：定义增删改查方法。
+    mapper映射文件：一个映射文件对应一个dao接口，namespece为dao权限定名，sql语句对应dao接口方法，statement的Id与Mapper接口的方法名保持一致。
+    dto：用于将后台的数据结构（javaBean）转换为对用户友好的表现方式的数据结构。检验注解也可以标注在dto上。
+        // service中查询
+        public ActionDto getById(Long id) {
+            ActionDto result = new ActionDto();
+            Action action = actionDao.selectById(id);
+            BeanUtils.copyProperties(action, result);
+            return result;
+	    }
+        // controller中
+        /**
+        * 商户新增
+        */
+        @RequestMapping(method = RequestMethod.POST)
+        public String add(BusinessDto dto,RedirectAttributes attr) {
+            if(businessService.add(dto)) {
+                attr.addAttribute(PageCodeEnum.KEY, PageCodeEnum.ADD_SUCCESS);
+                return "redirect:/businesses";
+            } else {
+                attr.addAttribute(PageCodeEnum.KEY, PageCodeEnum.ADD_FAIL);
+                return "redirect:/businesses/addPage";
+            }
+        }
+    service：dao注入到service，调用dao。
+
+
+11、Mybatis的Xml映射文件中，不同的Xml映射文件，id是否可以重复？
+    答：不同的Xml映射文件，如果配置了namespace，那么id可以重复；
+        如果没有配置namespace，那么id不能重复；
+        毕竟namespace不是必须的，只是最佳实践而已。
+        原因就是namespace+id是作为Map<String, MappedStatement>的key使用的，如果没有namespace，就剩下id，那么，id重复会导致数据互相覆盖。
+        有了namespace，自然id就可以重复，namespace不同，namespace+id自然也就不同。
+
+
+14、Mybatis中如何指定使用哪一种Executor执行器？
+    答：在Mybatis配置文件中，可以指定默认的ExecutorType执行器类型，也可以手动给DefaultSqlSessionFactory的创建SqlSession的方法传递ExecutorType类型参数。
+        ...
+        @Autowired  
+        private SqlSessionFactory sessionFactory;  
+        SqlSession session =sessionFactory.openSession(ExecutorType.BATCH,false);
+         for(int i=0;i<group;i++){  
+            session.update("com.com.hcd.mybatis.interfaces.CommonMapper.update", getParam());  
+        }  
+        session.flushStatements();  
+        session.commit(); 
+        ...
+        private static Map<String,Object> getParam(){  
+            Map param=new HashMap();  
+            return param;  
+        }
+
+15、Mybatis是否可以映射Enum枚举类？
+    答：Mybatis可以映射枚举类，不单可以映射枚举类，Mybatis可以映射任何对象到表的一列上。
+       映射方式为自定义一个TypeHandler，实现TypeHandler的setParameter()和getResult()接口方法。
+       TypeHandler有两个作用，一是完成从javaType至jdbcType的转换，二是完成jdbcType至javaType的转换，
+       体现为setParameter()和getResult()两个方法，分别代表设置sql问号占位符参数和获取列查询结果。
+
+16、Mybatis映射文件中，如果A标签通过include引用了B标签的内容，请问，B标签能否定义在A标签的后面，还是说必须定义在A标签的前面？
+    答：虽然Mybatis解析Xml映射文件是按照顺序解析的，但是，被引用的B标签依然可以定义在任何地方，Mybatis都可以正确识别。
+        原理是，Mybatis解析A标签，发现A标签引用了B标签，但是B标签尚未解析到，尚不存在，此时，Mybatis会将A标签标记为未解析状态，
+        然后继续解析余下的标签，包含B标签，待所有标签解析完毕，Mybatis会重新解析那些被标记为未解析的标签，此时再解析A标签时，
+        B标签已经存在，A标签也就可以正常解析完成了。
+
+17、简述Mybatis的Xml映射文件和Mybatis内部数据结构之间的映射关系？
+    答：Mybatis将所有Xml配置信息都封装到All-In-One重量级对象Configuration内部。
+        在Xml映射文件中，<parameterMap>标签会被解析为ParameterMap对象，其每个子元素会被解析为ParameterMapping对象。
+        <resultMap>标签会被解析为ResultMap对象，其每个子元素会被解析为ResultMapping对象。
+        每一个<select>、<insert>、<update>、<delete>标签均会被解析为MappedStatement对象，标签内的sql会被解析为BoundSql对象。
 
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>kafka<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 152.kafka 可以脱离 zookeeper 单独使用吗？为什么？
