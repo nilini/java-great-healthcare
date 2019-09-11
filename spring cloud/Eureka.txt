@@ -1,0 +1,64 @@
+1、基于REST的服务，实现Spring Cloud的服务发现功能。
+2、两个组件：Eureka Server和Eureka Client
+3、Eureka Server：
+    提供服务注册服务，各个节点启动后，会在Eureka Server中进行注册，包括主机与端口号、版本服务号、通讯协议等。
+    Eureka支持集群，首尾相连形成一个闭环即可，集群中的不同服务注册中心通过异步模式相互复制各自的状态。在给定的时间点每个实例关于所有服务的状态可能存在不一致的现象。
+4、Eureka Client：
+    在应用程序启动时，Eureka客户端向服务注册中心注册自身提供的服务，并周期性的发送心跳（默认30s）来更新它的服务租约，同时也能从服务端查询当前注册的服务信息并把他们缓存到本地。
+5、服务调用
+    客户端可以根据自己的需求决定具体调用哪个实例，在Ribbon中会默认采用轮询的方式进行调用，从而实现客户端的负载均衡。
+6、高可用
+    client 即是服务的提供放，也是服务的消费方。
+    server 即可做注册中心，也可向其他注册中心注册自己。
+7、注册中心启动类
+    @EnableEurekaServer
+    @SpringBootApplication
+    public class EurekaApplication {
+        public static void main(String[] args) {
+            new SpringApplicationBuilder(EurekaApplication.class).web(true).run(args);
+        }
+    }
+8、客户端
+    启动类添加@EnableDiscoveryClient或者@EnableEurekaClient
+9、与Zookeeper的区别
+    Zookeeper保证CP：
+        每个节点数据保持一致，master失联后会重新选主，选主时间长，在这期间整个zk集群都是不可用的。
+    Eureka保证AP：
+        Eureka中，集群是对等的，地位是相同的，虽不能保证一致性，但至少可以提供注册服务。
+        Eureka中，如果某台服务器宕机，Eureka不会有类似于Zookeeper的选主过程；客户端请求会自动切换到新的Eureka节点，当宕机的服务器重新恢复后，Eureka会再次将其纳入到服务器集群管理之中。这样服务提供者就不过分必依赖注册中心。
+        自我保护模式：Eureka Server在一定时间内没有收到某个服务实例的心跳，Eureka Server将会注销该实例（默认90秒）。但是当网络分区故障发生时，微服务与Eureka Server之间无法正常通信，这就变得非常危险，
+                    因为服务本身可能是健康的，此时不应该注销这个微服务。
+                    Eureka Server通过“自我保护模式”来解决这个问题--当Eureka Server节点在短时间内丢失过多客户端时（可能发生了分区故障），那么这个节点就会进入自我保护模式，一旦进入该模式，Eureka Server就会保护服务注册表中
+                    的信息，不再删除服务注册表中额数据。
+                    在Spring Cloud中，可以使用eureka.server.enable-self-preservation=false来禁用自我保护模式。
+        自我保护阈值因子：eureka.server.renewal-percent-threshold: 0.85 
+        自我保护阀值 = 服务总数 * 每分钟续约数 * 自我保护续约百分比阀值因子。
+        Eureka默认的自我保护阀值因子是85%，可以通过renewalPercentThreshold修改。
+        当eureka-server最后一分钟收到的心跳次数小于等于总心跳次数的85%(即小于等于Renews threshold)时会触发保护模式
+
+10.eureka怎么保证可用性，及底其层实现，与zookeeper有什么区别？
+    eureka高可用实际上就是Eureka Server作为注册中心向其他注册中心注册自己，形成一组相互注册的服务注册中心，以实现服务清单的相互同步，达到高可用。
+    每个注册中心都是对等的，保存这相同的信息，有服务宕机，其他服务还可以继续运行。
+    server1注册到server2: eureka.client.serviceUrl.defaultZone: http://server2-IP:8702/eureka
+    server2注册到server1: eureka.client.serviceUrl.defaultZone: http://server1-IP:8701/eureka
+    client注册到server集群：eureka.client.serviceUrl.defaultZone: http://server1-IP:8701/eureka, http://server2-IP:8702/eureka
+
+11、注册中心面板添加验证
+    pom文件需要spring-boot-starter-security的依赖
+    eureka.client.serviceUrl.defaultZone: http://user:123@localhost:${server.port}/eureka
+    security:
+        basic:
+            enabled: true
+        user:
+            name: user
+            password: 123
+
+12、Eureka Client从注册中心更新服务列表
+    1、Client从注册中心更新服务列表，自身会做缓存。
+    2、Client做增量更新，30s为周期循环调用。
+    3、Server只保存最近三分钟的变更。
+    4、如果超过3分钟没做增量变更的话，可能会造成数据不一致。Eureka会在返回的数据中添加hash值，判断hash来决定是否需要全量更新。
+
+13、常见配置
+https://m.imooc.com/article/23679
+

@@ -847,14 +847,19 @@ Spring、Springboot中如何做单元测试？
 
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>spring cloud<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 什么是Spring Cloud？SpringCloud 的优缺点？
+    Spring Cloud是基于Spring Boot来进行构建的，微服务将不同模块拆分关联，这就会遇到各种问题，而Spring Cloud提供了一整套的解决方案。
+    优点：
+        提供了很多的组件供微服务开发。
+        基于Spring Boot，使用者广泛。
+    缺点：维护麻烦
+
 什么是Hystrix
 Spring Cloud用到什么东西？
-
-110.什么是 spring cloud？
 
 111.spring cloud 断路器的作用是什么？
 
 112.spring cloud 的核心组件有哪些？
+    
 Spring Cloud的各个项目基于Spring Boot，将Netflix的多个框架进行封装，通过自动配置的方式将这些框架绑定到Spring环境中。
 Eureka：基于REST服务的分布式中间件，主要用于服务管理（发现）。
 Hystrix：容错框架，通过添加延迟阈值以及容错的逻辑，帮助我们控制分布式系统间组件的交互。

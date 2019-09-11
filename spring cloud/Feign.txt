@@ -1,0 +1,54 @@
+Spring Clound集群中，各个角色的通信基于REST服务，所以要使用REST服务的请求客户端。Spring自带有RestTemplate（使用HttpClient发送请求）。
+Feign 是一个REST客户端。
+
+在Spring cloud中使用Feign
+1、pom.xml中加入依赖
+    <dependency>
+        <groupid>org.springframework.cloud</groupid> 
+        <artifactid>spring-cloud-starter-feign</artifactid>
+    </dependency>
+
+2、服务调用启动类中，打开Feign开关
+    @SpringBootApplication 
+    @EnableEurekaClient 
+    @EnableFeignClients 
+    public class InvokerApplication { 
+        public static roid main(String[] args) { 
+            SprigApplication.run(InvokerApplication.class args);
+        }
+    }
+3、客户端 PersonClient.java
+    @FeignClient("spring-feign-provider") //声明调用 的服务名称
+    public interface PersonClient {
+        @RequestMapping(method = RequestMethod.GET, value="/hello")
+        String hello();
+    }
+4、控制器中调用
+    @RestController 
+    @Configuration 
+    public class InvokerController { 
+        @Autowired 
+        private PersonClient personClient; // 注入PersonClient的Bean，客户端实例的创建和维护，Speing容器都帮忙实现了。
+        @RequestMapping{value =”/invokeHello”, method = RequestMethod .GET) 
+            public String invokeHello{) { 
+            return personClient.hello{) ;
+        }
+    }
+
+2、Feign使用OKhttp发送request
+    Feign底层默认是使用jdk的HttpURLConnection发送HTTP请求，feign也提供了OKHttp来发送请求。
+    feign:
+        client:
+            config:
+            default:
+                connectTimeout: 5000
+                readTimeout: 5000
+                loggerLevel: basic
+        okhttp:
+            enabled: true
+        hystrix:
+            enabled: true
+3、Feign底层原理
+    启动时，程序会扫描包，扫描所有@FeignClient注解的类，并加入到spring的IOC容器中。当定义的Feign中的接口被调用，通过JDK的动态代理来生成RequestTemplate。
+    RequestTemplate中包含了请求的所有信息，如请求参数，请求URL等。
+    将Request交给client处理，这个client默认是JDK的HTTPUrlConnection，也可以是OKhttp、Apache的HTTPClient等。
