@@ -18,7 +18,7 @@ pom依赖
     public class DeptController {
         @Autowired
         private DeptService service;
-        //一旦调用服务方法失败抛出“错误信息后，胡自动范湖用@HystrixCommand标注好的fallbackMethod调用类中的指定方法”
+        //一旦调用服务方法失败抛出“错误信息后，会自动范湖用@HystrixCommand标注好的fallbackMethod调用类中的指定方法”
         @HystrixCommand(fallbackMethod = "processHystrix_Get")
         public Dept get(@PathVariable("id") Long id) {
             return service.get(id);

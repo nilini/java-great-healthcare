@@ -1,0 +1,134 @@
+Spring Cloud Zuul 网关
+
+一、在普通web项目中使用Zuul
+    1）网关web站点：8080
+        启动类添加注解：@EnableZuulProxy
+        配置文件：
+            zuul.router.books.url = http://localhost:8090
+    2）服务提供方：8090
+        正常启动一个web项目
+    
+    3）访问
+        所有发送给http://localhost:8080/books的请求都会被转发到8090端口。
+
+二、在Spring Cloud微服务中使用Zuul
+    四个项目：
+    1）Eureka服务器：
+        zuul-eureka-server，端口8761。
+    2）书本模块，服务提供者
+        zuul-book-service，端口9000。
+    3）销售模块，服务调用者
+        zuul-sale-service，端口9100。
+    4）网关
+        zuul-getway
+
+    zuul-book-service：
+    发布一个简单的Book服务。
+    @RequestMapping(value ="/book/{bookid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE) 
+    public Book findBook(@PathVariable Integer bookId) { 
+        Book book= new Book(); 
+        book.setId(bookId);
+        book.setName("Workflow 讲义");
+        book.setAuthor("杨恩雄");
+        return book;
+    }
+    --------------------------------------------
+    zull-sale-service:
+    @FeignClient("zuul-book-service")//声明调用书本服务
+    public interface BookService { 
+        /** 
+        ＊调用书本服务的接口，获取一个 Book 实例
+        */ 
+        @RequestMapping(method = RequestMethod.GET, value ="/book/{bookid}") 
+        Book getBook(@PathVariable("bookId") Integer bookId); 
+    }
+
+    @RestController 
+    public class SaleController { 
+        @Autowired
+        private BookService bookService;
+        @RequestMapping(value ="/sale-book/{bookid}", method = RequestMethod.GET) 
+        public String saleBook(@PathVariable Integer bookid) { 
+            // 调用 book 服务查找
+            Book book= bookService.getBook(bookid); 
+            // 控制台输入，模拟进行销售
+            System out.println("销但报块处理销售，要销售的图书 id ："+book.getid() + "，将名：" + book.getName()); 
+            // 销售成功
+            return "SUCCESS";
+        }
+    }
+    -------------------------------------------------
+    集群网关zuul-gateway
+    spring:
+        application:
+            name: zuul-gateway
+        eureka:
+            instance:
+                hostname: localhost
+            client:
+                serviceUrl:
+                    defaultZone: http://localhost:8761/eureka/
+        zuul:
+            routes:
+                sale:
+                    path: /sale/**
+                    serviceId: zuul-sale-service    
+        将自己注册到Eureka中，在配置Zuul时，声明所有的/sale/**请求将会被转发到Id为zuul-sale-service的服务进行处理。   
+
+三、路由配置
+    1、简单路由
+        SimpleHostRoutingFilter，该过滤器运行后，会将http请求全部转发到“源服务”。
+        zuul:
+            routes:
+                163:
+                    path: /163/**
+                    url: http://www.163.com
+        访问http://localhost:8080/163/ 将会跳转到163网站。
+    
+    2、跳转路由
+        SendForwardFilter，当外部访问网关A地址时，会跳转到B地址。
+        zuul:
+            routesL
+                helloRoute:
+                    path: /test/**
+                    url: forward:/source/hello
+        当外部访问/test地址时，将会自动跳转到/source/hello地址。
+        实际上调用了RequestDispatcher的forward方法进行跳转。
+    3、Ribbon路由
+        当网关作为Eureka客户端注册到Eureka服务器时，可以通过配置serviceId将请求转发到集群的服务中。
+        zuul:
+            routes:
+                sale:
+                    path: /sale/**
+                    serviceId: zuul-sale-service
+    4、自定义路由规则
+        在配置类中创建一个PatternServiceRouteMapper
+        @Configuration 
+        public class MyConfig { 
+            @Bean 
+            public PatternServiceRouteMapper patternServiceRouteMapper () { 
+            retur new PatternServiceRouteMapper( 
+                "(zuul)-(?<module>.+)-(service)", "${module}/**");
+            }
+        }
+    5、忽略路由
+        可以是有zuul.ignoredServices或zuul.ignoredPatterns来设置不进行路由的URL
+        zuul:
+            ignoredPatterns: /sale/noRoute
+            routes:
+                sale:
+                    path: /sale/**
+                    serviceId: zuul-sale-service
+        访问sale路径的请求都会被路由到zuul-sale-service进行处理，但是/sale/noRoute除外。
+    
+四、其他配置
+    1、请求头配置
+        在默认情况下，HTTP请求头的Cookie、Set-Cookie、Authorization属性不会传递到“源服务”，可以使用sensitiveHeaders属性来配置敏感请求头。
+        zuul:
+            sensitiveHeaders: accept-language, cookie
+    2、路由端点
+        网关项目中提供一个/routes服务，可以查看路由映射信息。
+        引入Spring Boot Actuator
+        使用注解@EnableZuulProxy
+        然后访问http://localhost:8080/routes 就会输出路由映射JSON。
+        
