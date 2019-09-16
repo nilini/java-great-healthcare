@@ -90,8 +90,25 @@
         }
         Iterator<E> iterator(); 这个没加锁.
         使用同步包装器适合不需要使用Iterator\对性能要求不高的情况.
-    2）https://blog.csdn.net/xingjiarong/article/details/48046751
-9-2\ ArrayList迭代删除
+    2）线程安全和不安全集合
+        线程安全集合：
+            Vector、HashTable
+            CopyOnWriteArrayList、CopyOnWriteArraySet
+            ConcurrentHashMap、ConcurrentSkipListSet
+
+        线程不安全集合：
+            ArrayList、LinkedList、HashMap、HashSet、TreeMap、TreeSet
+            
+        JUC包中的Queue实现类：
+            ArrayBlockingQueue是数组实现的线程安全的有界的阻塞队列。
+            LinkedBlockingQueue是单向链表实现的(指定大小)阻塞队列，该队列按 FIFO（先进先出）排序元素。
+            LinkedBlockingDeque是双向链表实现的(指定大小)双向并发阻塞队列，该阻塞队列同时支持FIFO和FILO两种操作方式。
+            ConcurrentLinkedQueue是单向链表实现的无界队列，该队列按 FIFO（先进先出）排序元素。
+            ConcurrentLinkedDeque是双向链表实现的无界队列，该队列同时支持FIFO和FILO两种操作方式。
+
+    https://blog.csdn.net/xingjiarong/article/details/48046751
+
+9-2、 ArrayList迭代删除
     ArrayList底层是数组实现, 使用remove(index)删除元素的时候, 步骤:
         1) 将i之后的所有元素前进一位, 数组最后的元素置为null.
     安全删除:
@@ -99,13 +116,35 @@
         2) 每次循环都要重新获取size()并且i--.
         3) 使用Iterator迭代的时候使用迭代器的删除,ite.remove();
 
-9-3\ 迭代器
+9-3、 迭代器
     迭代器提供一种方法对一个容器对象中的各个元素进行访问, 而又不暴露该对象容器的内部细节.
     因为容器的内部结构不同,很多时候可能不知道怎样去遍历一个容器的元素, 所以引入了迭代器模式.
+    java.util.Iterator是接口。ArrayList等集合中有内部类实现了此接口。
+    Iterator<String> listIt = list.iterator();
+         while(listIt.hasNext()){
+             System.out.println(listIt.next());
+         }
+    }
+    foreach语法同样是由Iterator实现的：
+    for (String string : list) {
+        System.out.println(string);
+    }
     https://www.cnblogs.com/zyuze/p/7726582.html
     https://blog.csdn.net/qq_30310607/article/details/82347807
     https://blog.csdn.net/layman1024/article/details/76103793
+
+9-4、快速失败机制
+    集合中有当前版本号modCount，每次修改（增、删）集合后版本号（expectModCount）都会加1，两个线程对集合进行操作时，若其中某一个线程
+    通过Itreator遍历集合时，改集合的内容被其他线程所改变，则会抛出ConcurrentModificationException异常。
+
+    当调用了ArrayList.add()或者ArrayList.remove()时候，只更新了modCount的状态，而迭代器中的exceptedModCount未同步，因此才会导致再次
+    调用Itreator.next()方法时抛出异常，但是调用Iterator.remove()中同步了exceptedModCount的值，所以单反下次再调用next()的时候，不会异常。
+
 10、有哪些无锁数据结构，他们实现的原理是什么。
+    CAS（compare-and-swap）比较交换。
+    java.util.concurrent.atomic包下的原子类是使用CAS.
+    cas是使用Unsafe 提供的navive方法实现的。
+
 11、讲讲java同步机制的wait和notify。
     java的wait和notify的通知机制可以用来实现线程间通信。wait表示线程的等待，调用该方法导致线程阻塞，直至另一线程调用notify或notifyall方法
     才可令其继续执行。经典的生产者、消费者模式即是使用wait/notify机制得以完成。

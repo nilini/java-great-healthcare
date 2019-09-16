@@ -1461,3 +1461,42 @@ int和Integer有什么别？
     lambda允许把函数作为一个方法的参数（函数作为参数传递进方法中）
 
 Java.util.function包里面的 Supplier/Consumer/Predicate/BiFunction 分别是什么含义？
+
+Unsafe
+    https://zhuanlan.zhihu.com/p/56772793
+    Unsafe是位于sun.misc包下的一个类，主要提供一些用于执行低级别、不安全操作的方法，如直接访问系统内存资源、自主管理内存资源。
+    但由于Unsafe类使java拥有了类似C指针一样操作内存空间的能力，存在风险。 
+    主要功能：
+    1）数组相关
+        返回数组元素内存大小。
+        返回数组元素偏移地址。
+    
+    2）内存屏障
+        禁止load、store重排序
+    
+    3）系统相关
+        返回内存页大小
+        返回系统指针大小
+    
+    4）线程调度
+        线程挂起、恢复
+        获取、释放锁
+        AbstractQueuedSynchronizer类就是通过调用LockSupport.park()和LockSupport.unpark()来实现线程的阻塞和唤醒的。
+        而LockSupport的park、unpark方法实际是调用Unsafe的park、unpark方式来实现的。
+
+    5）内存操作
+        分配、拷贝、扩充、释放堆外内存
+        设置、获得给定地址中的值
+    
+    6）CAS
+        java.util.concurrenet.automic包的原子类使用cas更新。
+
+    7）Class相关
+        动态创建类（普通类&匿名类）
+        获取field的内存地址偏移量
+        检测、确保类初始化
+
+    8）对象操作
+        获取对象成员属性在内存偏移量
+        非常规对象实例化
+        存储、获取指定偏移地址的变量值（包含延迟生效、volatile语义）
