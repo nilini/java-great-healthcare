@@ -983,30 +983,47 @@ Executors类是什么？ Executor和Executors的区别
     并行流：
         把一个内容分成多个数据块，并用不同的线程分别处理每个数据块的流，串行流则相反。
         并行流的底层其实就是Fork/Join框架的一个实现。
-https://www.cnblogs.com/wzqjy/p/7921063.html
-53） Java多线程中调用wait() 和 sleep()方法有什么不同？
-Java程序中wait 和 sleep都会造成某种形式的暂停，它们可以满足不同的需要。wait()方法用于线程间通信，如果等待条件为真且其它线程被唤醒时它会释放锁，而sleep()方法仅仅释放CPU资源或者让当前线程停止执行一段时间，但不会释放锁。你可以查看这篇文章获得更多信息。
-
-以上就是50道热门Java多线程和并发面试题啦。我没有分享所有题的答案但给未来的阅读者提供了足够的提示和线索来寻找答案。如果你真的找不到某题的答案，联系我吧，我会加上去的。这篇文章不仅可以用来准备面试，还能检查你对多线程、并发、设计模式和竞态条件、死锁和线程安全等线程问题的理解。我打算把这篇文章的问题弄成所有Java多线程问题的大合集，但是没有你的帮助恐怖是不能完成的，你也可以跟我分享其它任何问题，包括那些你被问到却还没有找到答案的问题。这篇文章对初学者或者是经验丰富的Java开发人员都很有用，过两三年甚至五六年你再读它也会受益匪浅。它可以扩展初学者尤其有用因为这个可以扩展他们的知识面，我会不断更新这些题，大家可以在文章后面的评论中提问，分享和回答问题一起把这篇面试题完善。
-
-22、为什么要使用线程池？
-    线程创建消耗cpu和时间，如果任务来了再创建线程会时间开销。
-
-3、线程池有什么作用？
-    1）减少了创建和销毁线程的次数，线程创建过程消耗cpu和时间，每个线程都可以被重复利用。
-    2）任务来了就能执行
-    3）方便控制线程数量和复用线程
+    fork/join:
+        将一个大任务，进行拆分（fork）成若干个子任务，再将一个个小任务的结果进行join汇总。
+        fork/join采用“工作窃取模式”，当执行新的任务时他可以将其拆分成更小的任务执行，
+        并将小任务加到线程队列中，然后再从一个随机线程中偷一个并把它加入自己的队列中。
+        public static void main(String[] args) {
+            ForkJoinPool forkJoinPool = new ForkJoinPool(4); // 最大并发数4
+            Fibonacci fibonacci = new Fibonacci(20);
+            long startTime = System.currentTimeMillis();
+            Integer result = forkJoinPool.invoke(fibonacci);
+            long endTime = System.currentTimeMillis();
+            System.out.println("Fork/join sum: " + result + " in " + (endTime - startTime) + " ms.");
+        }
+        //以下为官方API文档示例
+        static  class Fibonacci extends RecursiveTask<Integer> {
+            final int n;
+            Fibonacci(int n) {
+                this.n = n;
+            }
+            @Override
+            protected Integer compute() {
+                if (n <= 1) {
+                    return n;
+                }
+                Fibonacci f1 = new Fibonacci(n - 1);
+                f1.fork(); 
+                Fibonacci f2 = new Fibonacci(n - 2);
+                return f2.compute() + f1.join(); 
+            }
+        }
+        https://www.cnblogs.com/wzqjy/p/7921063.html
 
 3.1 多线程一定比单线程高效吗？
     不一定，多线程会有上下文切换开销，单线程没有这种开销。多线程会有锁的问题。
 
-    
 5、线程池都有哪几种工作队列？
     1）ArrayBlockingQueue 基于数组结构的有界阻塞队列，此队列按先进先出原则对元素进行排序。
     2）LinkedBlockingQueue 基于链表结构的阻塞队列，此队列按先进先出排序元素。
     3）SynchronousQueue 不存储元素的阻塞队列。每个插入操作必须等待到另一个线程调用移除操作，否则插入操作一直处于阻塞状态。
     4）PriorityBlockingQueue 具有优先级的无限阻塞队列。
     https://www.jianshu.com/p/6c6f396fc88e
+
 5、线程池大小设置
     https://www.cnblogs.com/cjsblog/p/9068886.html
     任务类型：CPU密集型、IO密集型、混合型。
@@ -1024,8 +1041,6 @@ Java程序中wait 和 sleep都会造成某种形式的暂停，它们可以满�
     corePoolSize：线程池中允许同时运行的最大线程数。
     maxinumPoolSize：线程池允许的最大线程数，表示最大能创建多少个线程，大于等于corePoolSize
     keepAliveTime：线程没有任务时最多保持多久然后停下。
-
-Java线程的状态有哪些，它们是何时、如何（通过什么方法）进行转换的
 
 什么是CopyOnWriteArrayList，如何使用它？
     读写分离，写时复制出一个新的数组，完成插入、修改或者移除操作后将新数组赋值给array
@@ -1122,17 +1137,32 @@ RentrantLock 提供主要哪些方法？
     活锁：多线程中出现了相互谦让，都制动将资源释放给别的线程使用，这样资源在多个线程之间跳动而又得不到使用，形成活锁。
 
 多线程锁的升级原理是什么？
+    偏向锁：
+        优点：加锁解锁无需额外的消耗，和非同步方法时间相差纳秒级别。
+        缺点：如果竞争的线程多，那么会带来额外的锁撤销的消耗。
+        使用场景：基本没有线程竞争锁的同步场景。
+    轻量级锁：
+        优点：竞争的线程不会阻塞，使用自旋，提高程序相应速度。
+        缺点：如果一直不能获取锁，长时间自旋会造成CPU消耗。
+        使用场景：使用于少量线程竞争锁现象，且线程持有锁的时间不长，追求相应速度的场景。
+    重量级锁：
+        优点：不使用CPU自旋，不会导致CPU空转消耗CPU资源。
+        缺点：阻塞线程，响应时间长
+        适用场景：很多线程竞争锁，且锁持有的时间长，追求吞吐量的场景。
+    
+    锁升级：
+        对象数据存放在对内存中，大致分为三个部分：对象头、实例变量、填充字节。
+        对象头保存锁类型（无锁、偏向锁、轻量级锁、重量级锁）
+        引入偏向锁：
+            大多数时候是不存在竞争的，常常是一个线程多次获得同一个锁，因此如果每次都要竞争锁会增大很多没有必要的代价。
+    https://blog.csdn.net/tongdanping/article/details/79647337
+    锁可以升级但不可以降级，偏向锁状态可以被重置为无锁状态。
 
-
-35.并行和并发有什么区别？
+35. 并行和并发有什么区别？
     单个CPU执行多个线程，多个线程按时间片轮流执行就是并发。每一时刻，只会有一个线程被执行。
     多个CPU同时执行多个线程是并行，同一时刻可以有多个线程在执行。
-36.线程和进程的区别？
-    进程是资源（cpu、内存等）分配的最小单位，线程是程序执行的最小单位。
-    一个进程可以有多个线程。
-    进程粒度比线程大。
 
-37.守护线程是什么？
+37. 守护线程是什么？
     只有当最后一个非守护线程结束时，守护线程才会随着JVM一同结束。
     GC是守护线程。
     childThread.setDaemon(true);必须在childThread.start();之前。
