@@ -1457,11 +1457,31 @@ int和Integer有什么别？
         ArrayStoreException(数据存储异常)
         BufferOverflowException(缓冲溢出异常)
         
-什么是lamda表达式、函数式编程？
-    lambda表达式，匿名函数，也可以称为闭包。
-    lambda允许把函数作为一个方法的参数（函数作为参数传递进方法中）
+什么是lambda表达式、函数式编程？
+    在java8中，可以优雅的把 “一块代码” 赋给一个变量，而“这块代码”，或者说“这个被赋给一个变量的函数”，就是一个Lambda表达式。
+    aBlockOfCode = public void doSomeShit(String s){
+        System.out.println(s);
+    }
+    ====>
+    aBlockOfCode = (s)->System.out.println(s);
+    所有的Lambda的类型都是一个接口，而Lambda表达式本身，也就是“那段代码”，需要是这个接口的实现。
+    Lambda本身就是一个接口的实现。
+    给aBlockOfCode加上一个类型：
+    interface MyLambdaInterface(){
+        void doSomeShit(Strinf s);
+    }
+    函数式接口：只有一个接口函数需要被实现的接口类型。加上声明@FunctionalInterface，这样别人就无法在里面添加新的接口函数了。
+    得到一个完整的Lambda表达式声明：
+    MyLambdaInterface aBlockOfCode = (s)->System.out.println(s);
+    由于Lambda可以直接赋值给一个变量，我们就可以直接把Lambda作为参数传给函数，而传统的Java必须有明确的接口实现的定义，初始化才行。
+    public static void enact(MyLambdaInterface myLambda, String s){
+        myLambda.doSomeShit(s);
+    }
+    enact(s->System.out.println(s), "hello world");
+    https://www.zhihu.com/question/20125256/answer/324121308
 
 Java.util.function包里面的 Supplier/Consumer/Predicate/BiFunction 分别是什么含义？
+
 
 Unsafe
     https://zhuanlan.zhihu.com/p/56772793
