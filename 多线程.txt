@@ -354,7 +354,9 @@
             String strDateFormat = "yyyy-MM-dd HH:mm:ss";
             SimpleDateFormat sdf = new SimpleDateFormat(strDateFormat);
             System.out.println(sdf.format(date));
-            线程不安全
+            线程不安全, 使用ThreadLocal解决。
+        SimpleDateFormat(下面简称sdf)类内部有一个Calendar对象引用,它用来储存和这个sdf相关的日期信息,例如sdf.parse(dateStr), sdf.format(date) 诸如此类的方法参数传入的日期相关String, Date等等, 都是交友Calendar引用来储存的.这样就会导致一个问题,如果你的sdf是个static的, 那么多个thread 之间就会共享这个sdf, 同时也是共享这个Calendar引用, 并且, 观察 sdf.parse() 方法,你会发现有如下的调用: 
+        这里会导致的问题就是, 如果 线程A 调用了 sdf.parse(), 并且进行了 calendar.clear()后还未执行calendar.getTime()的时候,线程B又调用了sdf.parse(), 这时候线程B也执行了sdf.clear()方法, 这样就导致线程A的的calendar数据被清空了(实际上A,B的同时被清空了). 又或者当 A 执行了calendar.clear() 后被挂起, 这时候B 开始调用sdf.parse()并顺利i结束, 这样 A 的 calendar内存储的的date 变成了后来B设置的calendar的date 
 
     什么 Java 原型不是线程安全的
         long、double不是线程安全的。
