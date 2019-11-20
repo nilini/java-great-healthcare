@@ -1188,10 +1188,6 @@ int和Integer有什么别？
     一般接口返回数据都是json，js可以用eval轻松解析json。
     开源框架jackson。
 
-1. JDK 和 JRE 有什么区别？
-    JRE是java运行环境，有jvm，普通用户运行java。
-    JDK是java开发包，包括jre。还有一些其他的开发工具。开发者使用。
-
 2. == 和 equals 的区别是什么？
     == 比较地址
     equals()交给开发者自己去定义比较规则，Object中比较地址，String继承自Object并重写了equals，比较值。基本类型包装类中比较值。
