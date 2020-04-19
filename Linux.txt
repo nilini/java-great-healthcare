@@ -69,6 +69,8 @@
 13、linux中awk命令的使用？
 
 14、linux中如何监控和查看内存、cpu情况？
+http://www.blogjava.net/DLevin/archive/2014/12/31/421982.html
+
 
 15、Linux中如何配置网络？网络模式有哪些？
 
